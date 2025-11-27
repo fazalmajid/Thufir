@@ -8,7 +8,8 @@
       "Bash(docker-compose up:*)",
       "Bash(docker compose:*)",
       "Bash(chmod:*)",
-      "Bash(curl:*)"
+      "Bash(curl:*)",
+      "Bash(docker-compose down:*)"
     ],
     "deny": [],
     "ask": []

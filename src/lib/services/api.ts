@@ -1,7 +1,6 @@
 import type { Task, CreateTaskInput, UpdateTaskInput } from '$lib/types/task';
 import type { Project } from '$lib/types/project';
 import type { Area } from '$lib/types/area';
-import type { ChecklistItem } from '$lib/types/checklist';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
@@ -60,6 +59,13 @@ export const taskAPI = {
 		return fetchAPI(`/api/tasks/${id}/restore`, {
 			method: 'POST'
 		});
+	},
+
+	async reorder(tasks: Array<{ id: string; sort_order: number }>): Promise<{ success: boolean }> {
+		return fetchAPI('/api/tasks/reorder', {
+			method: 'POST',
+			body: JSON.stringify({ tasks })
+		});
 	}
 };
 
@@ -93,26 +99,6 @@ export const areaAPI = {
 				id: crypto.randomUUID(),
 				...data
 			})
-		});
-	}
-};
-
-// Checklist API
-export const checklistAPI = {
-	async create(data: Partial<ChecklistItem>): Promise<ChecklistItem> {
-		return fetchAPI('/api/checklist-items', {
-			method: 'POST',
-			body: JSON.stringify({
-				id: crypto.randomUUID(),
-				...data
-			})
-		});
-	},
-
-	async update(id: string, data: Partial<ChecklistItem>): Promise<ChecklistItem> {
-		return fetchAPI(`/api/checklist-items/${id}`, {
-			method: 'PATCH',
-			body: JSON.stringify(data)
 		});
 	}
 };

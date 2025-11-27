@@ -64,26 +64,9 @@ CREATE TABLE tasks (
     -- Ordering
     sort_order INTEGER NOT NULL DEFAULT 0,
 
-    -- Checklist summary (denormalized)
-    checklist_total INTEGER DEFAULT 0,
-    checklist_completed INTEGER DEFAULT 0,
-
     -- Metadata
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    deleted_at TIMESTAMPTZ
-);
-
--- Checklist items: Sub-items within tasks
-CREATE TABLE checklist_items (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    task_id UUID NOT NULL REFERENCES tasks(id) ON DELETE CASCADE,
-    title VARCHAR(500) NOT NULL,
-    is_completed BOOLEAN NOT NULL DEFAULT FALSE,
-    sort_order INTEGER NOT NULL DEFAULT 0,
-    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    completed_at TIMESTAMPTZ,
     deleted_at TIMESTAMPTZ
 );
 
@@ -107,7 +90,6 @@ CREATE INDEX idx_tasks_deadline ON tasks(deadline) WHERE deleted_at IS NULL;
 CREATE INDEX idx_tasks_is_completed ON tasks(is_completed) WHERE deleted_at IS NULL;
 CREATE INDEX idx_tasks_tags ON tasks USING GIN(tags) WHERE deleted_at IS NULL;
 CREATE INDEX idx_projects_area_id ON projects(area_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_checklist_items_task_id ON checklist_items(task_id) WHERE deleted_at IS NULL;
 
 -- Updated_at triggers
 CREATE OR REPLACE FUNCTION update_updated_at_column()
@@ -127,37 +109,8 @@ CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects
 CREATE TRIGGER update_tasks_updated_at BEFORE UPDATE ON tasks
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
-CREATE TRIGGER update_checklist_items_updated_at BEFORE UPDATE ON checklist_items
-    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
 CREATE TRIGGER update_tags_updated_at BEFORE UPDATE ON tags
     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-
--- Trigger to update checklist summary on tasks
-CREATE OR REPLACE FUNCTION update_task_checklist_summary()
-RETURNS TRIGGER AS $$
-BEGIN
-    UPDATE tasks
-    SET
-        checklist_total = (
-            SELECT COUNT(*) FROM checklist_items
-            WHERE task_id = COALESCE(NEW.task_id, OLD.task_id)
-            AND deleted_at IS NULL
-        ),
-        checklist_completed = (
-            SELECT COUNT(*) FROM checklist_items
-            WHERE task_id = COALESCE(NEW.task_id, OLD.task_id)
-            AND is_completed = TRUE
-            AND deleted_at IS NULL
-        )
-    WHERE id = COALESCE(NEW.task_id, OLD.task_id);
-    RETURN COALESCE(NEW, OLD);
-END;
-$$ LANGUAGE plpgsql;
-
-CREATE TRIGGER update_checklist_summary
-    AFTER INSERT OR UPDATE OR DELETE ON checklist_items
-    FOR EACH ROW EXECUTE FUNCTION update_task_checklist_summary();
 
 -- Insert some sample data for testing
 INSERT INTO areas (id, name, color, sort_order) VALUES

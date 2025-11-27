@@ -15,6 +15,6 @@
 	</div>
 
 	<div class="bg-white rounded-lg shadow-sm p-0">
-		<TaskList tasks={taskStore.somedayTasks} title="" />
+		<TaskList tasks={taskStore.somedayTasks} title="" enableReorder={true} />
 	</div>
 </div>

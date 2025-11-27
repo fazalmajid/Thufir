@@ -12,23 +12,25 @@
 	));
 </script>
 
-<div class="container mx-auto p-8 max-w-4xl">
+<div class="container mx-auto px-4 py-4 max-w-4xl">
 	{#if project}
-		<div class="mb-6">
-			<h1 class="text-3xl font-bold text-gray-900">{project.name}</h1>
+		<div class="mb-4">
+			<h1 class="text-2xl font-bold text-gray-900">{project.name}</h1>
 			{#if project.notes}
-				<p class="text-gray-600 mt-2">{project.notes}</p>
+				<p class="text-sm text-gray-600 mt-0.5">{project.notes}</p>
 			{/if}
 		</div>
 
-		<div class="bg-white rounded-lg shadow p-6 mb-6">
+		<div class="bg-white rounded-lg shadow-sm p-3 mb-3">
 			<TaskQuickAdd status="inbox" />
 		</div>
 
-		<TaskList tasks={projectTasks} title="" />
+		<div class="bg-white rounded-lg shadow-sm p-0">
+			<TaskList tasks={projectTasks} title="" enableReorder={true} />
+		</div>
 	{:else}
-		<div class="bg-white rounded-lg shadow p-12 text-center">
-			<p class="text-gray-500">Project not found</p>
+		<div class="bg-white rounded-lg shadow-sm p-4 text-center">
+			<p class="text-sm text-gray-500">Project not found</p>
 		</div>
 	{/if}
 </div>

@@ -10,12 +10,12 @@
 	</div>
 
 	{#if taskStore.completedTasks.length === 0}
-		<div class="bg-white rounded-lg shadow-sm p-8 text-center">
-			<svg class="w-12 h-12 mx-auto text-gray-300 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<div class="bg-white rounded-lg shadow-sm p-4 text-center">
+			<svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
 			</svg>
 			<p class="text-sm text-gray-500">No completed tasks yet</p>
-			<p class="text-xs text-gray-400 mt-1">Complete tasks to see them here</p>
+			<p class="text-xs text-gray-400 mt-0.5">Complete tasks to see them here</p>
 		</div>
 	{:else}
 		<div class="bg-white rounded-lg shadow-sm p-0">

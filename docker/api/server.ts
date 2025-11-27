@@ -36,12 +36,13 @@ const createTaskSchema = z.object({
 
 const updateTaskSchema = z.object({
 	title: z.string().min(1).max(500).optional(),
-	notes: z.string().optional(),
+	notes: z.string().nullable().optional(),
 	project_id: z.string().uuid().nullable().optional(),
 	area_id: z.string().uuid().nullable().optional(),
 	status: z.enum(['inbox', 'today', 'upcoming', 'anytime', 'someday', 'completed']).optional(),
 	scheduled_date: z.string().nullable().optional(),
 	deadline: z.string().nullable().optional(),
+	reminder_time: z.string().nullable().optional(),
 	tags: z.array(z.string()).optional(),
 	is_flagged: z.boolean().optional(),
 	priority: z.number().min(0).max(3).optional(),
@@ -177,6 +178,35 @@ app.post('/api/tasks/:id/restore', async (c) => {
 	}
 });
 
+const reorderTasksSchema = z.object({
+	tasks: z.array(z.object({
+		id: z.string().uuid(),
+		sort_order: z.number()
+	}))
+});
+
+app.post('/api/tasks/reorder', zValidator('json', reorderTasksSchema), async (c) => {
+	const { tasks } = c.req.valid('json');
+
+	try {
+		// Update all task orders in a transaction
+		await sql.begin(async (sql) => {
+			for (const task of tasks) {
+				await sql`
+					UPDATE tasks
+					SET sort_order = ${task.sort_order}, updated_at = NOW()
+					WHERE id = ${task.id}
+				`;
+			}
+		});
+
+		return c.json({ success: true });
+	} catch (error) {
+		console.error('Error reordering tasks:', error);
+		return c.json({ error: 'Failed to reorder tasks' }, 500);
+	}
+});
+
 // Project routes
 app.get('/api/projects', async (c) => {
 	try {
@@ -236,46 +266,6 @@ app.post('/api/areas', async (c) => {
 	} catch (error) {
 		console.error('Error creating area:', error);
 		return c.json({ error: 'Failed to create area' }, 500);
-	}
-});
-
-// Checklist item routes
-app.post('/api/checklist-items', async (c) => {
-	const data = await c.req.json();
-
-	try {
-		const [item] = await sql`
-			INSERT INTO checklist_items ${sql(data)}
-			RETURNING *
-		`;
-
-		return c.json(item, 201);
-	} catch (error) {
-		console.error('Error creating checklist item:', error);
-		return c.json({ error: 'Failed to create checklist item' }, 500);
-	}
-});
-
-app.patch('/api/checklist-items/:id', async (c) => {
-	const id = c.req.param('id');
-	const updates = await c.req.json();
-
-	try {
-		const [updated] = await sql`
-			UPDATE checklist_items
-			SET ${sql(updates)}, updated_at = NOW()
-			WHERE id = ${id} AND deleted_at IS NULL
-			RETURNING *
-		`;
-
-		if (!updated) {
-			return c.json({ error: 'Checklist item not found' }, 404);
-		}
-
-		return c.json(updated);
-	} catch (error) {
-		console.error('Error updating checklist item:', error);
-		return c.json({ error: 'Failed to update checklist item' }, 500);
 	}
 });
 

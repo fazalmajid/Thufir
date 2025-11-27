@@ -121,6 +121,28 @@ class TaskStore {
 			throw err;
 		}
 	}
+
+	async reorder(reorderedTasks: Task[]) {
+		// Update local state immediately for responsiveness
+		const updates = reorderedTasks.map((task, index) => ({
+			id: task.id,
+			sort_order: index
+		}));
+
+		// Optimistically update local state
+		const taskMap = new Map(reorderedTasks.map((task, index) => [task.id, { ...task, sort_order: index }]));
+		this.tasks = this.tasks.map((t) => taskMap.get(t.id) || t);
+
+		try {
+			await taskAPI.reorder(updates);
+		} catch (err) {
+			this.error = err instanceof Error ? err.message : 'Failed to reorder tasks';
+			console.error('Failed to reorder tasks:', err);
+			// Reload tasks to restore correct order on error
+			await this.load();
+			throw err;
+		}
+	}
 }
 
 export const taskStore = new TaskStore();

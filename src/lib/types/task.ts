@@ -34,10 +34,6 @@ export interface Task {
 	// Ordering
 	sort_order: number;
 
-	// Checklist summary
-	checklist_total: number;
-	checklist_completed: number;
-
 	// Metadata
 	created_at: string;
 	updated_at: string;
@@ -60,12 +56,13 @@ export interface CreateTaskInput {
 
 export interface UpdateTaskInput {
 	title?: string;
-	notes?: string;
+	notes?: string | null;
 	project_id?: string | null;
 	area_id?: string | null;
 	status?: TaskStatus;
 	scheduled_date?: string | null;
 	deadline?: string | null;
+	reminder_time?: string | null;
 	tags?: string[];
 	is_flagged?: boolean;
 	priority?: number;

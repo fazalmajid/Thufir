@@ -10,3 +10,121 @@ body {
 	margin: 0;
 	padding: 0;
 }
+
+/* Drag and drop styles */
+.dndzoneActive {
+	outline: 2px dashed #3b82f6;
+	outline-offset: 2px;
+}
+
+.dndDropzoneActive {
+	background-color: rgba(59, 130, 246, 0.05);
+}
+
+.dragging {
+	opacity: 0.5;
+	transform: scale(1.02);
+}
+
+/* Markdown content styles for task notes */
+.prose {
+	color: inherit;
+}
+
+.prose p {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.prose p:first-child {
+	margin-top: 0;
+}
+
+.prose p:last-child {
+	margin-bottom: 0;
+}
+
+.prose ul,
+.prose ol {
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+	padding-left: 1.5em;
+}
+
+.prose li {
+	margin-top: 0.25em;
+	margin-bottom: 0.25em;
+}
+
+.prose code {
+	background-color: rgba(0, 0, 0, 0.05);
+	padding: 0.125rem 0.25rem;
+	border-radius: 0.25rem;
+	font-size: 0.875em;
+}
+
+.prose pre {
+	background-color: rgba(0, 0, 0, 0.05);
+	padding: 0.5rem;
+	border-radius: 0.375rem;
+	overflow-x: auto;
+	margin-top: 0.5em;
+	margin-bottom: 0.5em;
+}
+
+.prose pre code {
+	background-color: transparent;
+	padding: 0;
+}
+
+.prose strong {
+	font-weight: 600;
+}
+
+.prose em {
+	font-style: italic;
+}
+
+.prose a {
+	color: #3b82f6;
+	text-decoration: underline;
+}
+
+.prose a:hover {
+	color: #2563eb;
+}
+
+/* Interactive checkboxes in markdown */
+.prose .task-checkbox {
+	cursor: pointer !important;
+	width: 1em;
+	height: 1em;
+	margin-right: 0.5em;
+	vertical-align: middle;
+	accent-color: #3b82f6;
+	pointer-events: auto !important;
+}
+
+.prose .task-list-item {
+	list-style-type: none;
+	padding-left: 0;
+}
+
+.prose .task-list-item input[type="checkbox"] {
+	margin-right: 0.5em;
+	cursor: pointer !important;
+	pointer-events: auto !important;
+}
+
+/* Ensure all checkboxes in notes are clickable and NOT disabled */
+.prose input[type="checkbox"] {
+	cursor: pointer !important;
+	pointer-events: auto !important;
+}
+
+/* Override any disabled state that might be set */
+.prose input[type="checkbox"]:disabled {
+	cursor: pointer !important;
+	pointer-events: auto !important;
+	opacity: 1 !important;
+}
