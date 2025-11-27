@@ -1,0 +1,101 @@
+# Thufir - Self-Hosted Task Manager
+
+A local-first, self-hosted PWA to replace Cultured Code's Things app, built with Svelte and ElectricSQL.
+
+## Current Status: Phase 1 Complete ✅
+
+### What's Working:
+
+**Backend:**
+- ✅ PostgreSQL database with complete schema
+- ✅ Hono API server with CRUD endpoints
+- ✅ Docker Compose setup for easy deployment
+- ✅ Sample data (tasks, projects, areas)
+
+**Frontend:**
+- ✅ Svelte 5 with runes-based reactive state
+- ✅ TailwindCSS styling
+- ✅ Full sidebar navigation with:
+  - Inbox, Today, Upcoming, Anytime, Someday views
+  - Areas of responsibility with nested projects
+  - Logbook (completed tasks)
+- ✅ Task management (create, complete, delete)
+- ✅ Task list views for all categories
+- ✅ Project pages
+
+### Features:
+
+- **Task Management**: Create, complete, and delete tasks
+- **Multiple Views**: Inbox, Today, Upcoming, Anytime, Someday
+- **Areas & Projects**: Organize tasks by life areas and projects
+- **Collapsible Sidebar**: Expand/collapse areas to see nested projects
+- **Task Counts**: See number of tasks in each view
+- **Completed Tasks**: Review completed work in the Logbook
+
+## Running the Application
+
+### Prerequisites:
+- Docker and Docker Compose
+- Node.js 20+
+
+### Start the Backend:
+```bash
+# Start PostgreSQL and Hono API
+docker compose up -d postgres api
+```
+
+### Start the Frontend:
+```bash
+# Install dependencies (first time only)
+npm install
+
+# Run development server
+npm run dev
+```
+
+### Access the App:
+- Frontend: http://localhost:5173
+- API: http://localhost:3001
+- PostgreSQL: localhost:5432
+
+## Project Structure
+
+```
+thufir/
+├── docker/                  # Docker configuration
+│   ├── api/                # Hono API server
+│   └── postgres/           # PostgreSQL schema
+├── src/
+│   ├── routes/             # SvelteKit pages
+│   │   ├── inbox/
+│   │   ├── today/
+│   │   ├── upcoming/
+│   │   ├── anytime/
+│   │   ├── someday/
+│   │   ├── logbook/
+│   │   └── projects/[id]/
+│   └── lib/
+│       ├── components/     # Svelte components
+│       ├── stores/         # State management
+│       ├── services/       # API clients
+│       └── types/          # TypeScript types
+└── static/                 # Static assets
+```
+
+## Next Steps
+
+- [ ] Add ElectricSQL real-time sync
+- [ ] Implement date scheduling
+- [ ] Add tags and filtering
+- [ ] Build checklist functionality
+- [ ] Implement PWA offline support
+- [ ] Add keyboard shortcuts
+- [ ] Dark mode
+
+## Tech Stack
+
+- **Frontend**: Svelte 5 + SvelteKit + TailwindCSS
+- **Backend**: Node.js + Hono + PostgreSQL
+- **Sync**: ElectricSQL (planned)
+- **UI Components**: Bits-UI (planned)
+- **Deployment**: Docker Compose
