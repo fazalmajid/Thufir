@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { page } from '$app/stores';
+	import { onMount } from 'svelte';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
@@ -54,6 +55,19 @@
 	});
 
 	let expandedAreas = $state<Set<string>>(new Set());
+
+	onMount(() => {
+		const match = document.cookie.match(/(?:^|; )expandedAreas=([^;]*)/);
+		if (match) {
+			try {
+				expandedAreas = new Set(JSON.parse(decodeURIComponent(match[1])));
+			} catch {}
+		}
+	});
+
+	$effect(() => {
+		document.cookie = `expandedAreas=${encodeURIComponent(JSON.stringify([...expandedAreas]))}; path=/`;
+	});
 
 	function toggleArea(areaId: string) {
 		if (expandedAreas.has(areaId)) {
