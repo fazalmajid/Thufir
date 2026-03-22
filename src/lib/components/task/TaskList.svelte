@@ -4,20 +4,29 @@
 	import { dndzone } from 'svelte-dnd-action';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { flip } from 'svelte/animate';
+	import { untrack } from 'svelte';
 
 	interface Props {
 		tasks: Task[];
 		title: string;
 		enableReorder?: boolean;
+		showContext?: boolean;
 	}
 
-	let { tasks, title, enableReorder = false }: Props = $props();
-	let items = $state<Task[]>([...tasks]);
-	let dragDisabled = $state(true);
+	let { tasks, title, enableReorder = false, showContext = false }: Props = $props();
+	let items = $state.raw<Task[]>([...tasks]);
 
-	// Sync items when tasks prop changes
+	// Only sync items when the SET of tasks changes (add/remove),
+	// not when only order changes (DnD manages order locally)
 	$effect(() => {
-		items = [...tasks];
+		const newTaskIds = new Set(tasks.map(t => t.id));
+		const changed = untrack(() => {
+			if (newTaskIds.size !== items.length) return true;
+			return items.some(t => !newTaskIds.has(t.id));
+		});
+		if (changed) {
+			items = [...tasks];
+		}
 	});
 
 	function handleDndConsider(e: CustomEvent<{ items: Task[] }>) {
@@ -27,24 +36,14 @@
 	async function handleDndFinalize(e: CustomEvent<{ items: Task[] }>) {
 		items = e.detail.items;
 
-		// Only save if order actually changed
 		if (enableReorder) {
 			try {
 				await taskStore.reorder(items);
 			} catch (err) {
 				console.error('Failed to reorder tasks:', err);
+				items = [...tasks];
 			}
 		}
-	}
-
-	function handleMouseDown() {
-		if (enableReorder) {
-			dragDisabled = false;
-		}
-	}
-
-	function handleMouseUp() {
-		dragDisabled = true;
 	}
 </script>
 
@@ -60,20 +59,16 @@
 			class="space-y-0.5"
 			use:dndzone={{
 				items,
-				dragDisabled,
+				dragDisabled: !enableReorder,
 				dropTargetStyle: {},
 				type: 'tasks'
 			}}
 			onconsider={handleDndConsider}
 			onfinalize={handleDndFinalize}
-			onmousedown={handleMouseDown}
-			onmouseup={handleMouseUp}
-			ontouchstart={handleMouseDown}
-			ontouchend={handleMouseUp}
 		>
 			{#each items as task (task.id)}
 				<div animate:flip={{ duration: 200 }}>
-					<TaskItem {task} draggable={enableReorder} />
+					<TaskItem {task} draggable={enableReorder} {showContext} />
 				</div>
 			{/each}
 		</div>

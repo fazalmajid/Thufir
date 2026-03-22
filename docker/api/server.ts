@@ -57,10 +57,17 @@ app.get('/health', (c) => {
 
 // Task routes
 app.get('/api/tasks', async (c) => {
+	const status = c.req.query('status');
+	const projectId = c.req.query('project_id');
+	const areaId = c.req.query('area_id');
+
 	try {
 		const tasks = await sql`
 			SELECT * FROM tasks
 			WHERE deleted_at IS NULL
+			${status ? sql`AND status = ${status}` : sql``}
+			${projectId ? sql`AND project_id = ${projectId}` : sql``}
+			${areaId ? sql`AND area_id = ${areaId} AND project_id IS NULL` : sql``}
 			ORDER BY sort_order ASC, created_at DESC
 		`;
 		return c.json(tasks);

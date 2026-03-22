@@ -2,7 +2,7 @@ import { projectAPI } from '$lib/services/api';
 import type { Project } from '$lib/types/project';
 
 class ProjectStore {
-	projects = $state<Project[]>([]);
+	projects = $state.raw<Project[]>([]);
 	loading = $state(false);
 	error = $state<string | null>(null);
 

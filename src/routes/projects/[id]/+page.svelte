@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { page } from '$app/stores';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
@@ -7,9 +8,15 @@
 
 	let projectId = $derived($page.params.id);
 	let project = $derived(projectStore.projects.find(p => p.id === projectId));
-	let projectTasks = $derived(taskStore.tasks.filter(
-		t => t.project_id === projectId && !t.is_completed && !t.deleted_at
-	));
+	let projectTasks = $derived(
+		taskStore.tasks
+			.filter(t => t.project_id === projectId && !t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order)
+	);
+
+	onMount(() => {
+		taskStore.load({ project_id: projectId });
+	});
 </script>
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">

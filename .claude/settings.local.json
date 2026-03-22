@@ -9,7 +9,12 @@
       "Bash(docker compose:*)",
       "Bash(chmod:*)",
       "Bash(curl:*)",
-      "Bash(docker-compose down:*)"
+      "Bash(docker-compose down:*)",
+      "Bash(sqlite3:*)",
+      "Bash(python3 -c \"import sys,json; d=json.load\\(sys.stdin\\); print\\(f''''Total tasks: {len\\(d\\)}, payload size: {len\\(sys.stdin.buffer.read\\(\\)\\) if hasattr\\(sys.stdin, buffer\\) else ?}''''\\)\")",
+      "Bash(psql:*)",
+      "Bash(python3 -c \"import websockets; print\\(''websockets ok''\\)\")",
+      "Bash(python3 -c \"import aiohttp; print\\(''aiohttp ok''\\)\")"
     ],
     "deny": [],
     "ask": []

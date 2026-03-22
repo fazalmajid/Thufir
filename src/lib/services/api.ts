@@ -23,8 +23,9 @@ async function fetchAPI(endpoint: string, options?: RequestInit) {
 
 // Task API
 export const taskAPI = {
-	async list(): Promise<Task[]> {
-		return fetchAPI('/api/tasks');
+	async list(params?: { status?: string; project_id?: string; area_id?: string }): Promise<Task[]> {
+		const qs = params ? '?' + new URLSearchParams(Object.entries(params).filter(([, v]) => v != null) as [string, string][]).toString() : '';
+		return fetchAPI(`/api/tasks${qs}`);
 	},
 
 	async get(id: string): Promise<Task> {

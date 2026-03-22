@@ -22,23 +22,30 @@
 	let completedCount = $derived(taskStore.completedTasks.length);
 	let trashedCount = $derived(taskStore.trashedTasks.length);
 
-	// Group projects by area
+	// Group projects by area, with active task counts
 	let areasWithProjects = $derived.by(() => {
 		const areas = areaStore.activeAreas;
-		const result: AreaWithProjects[] = [];
+		const tasks = taskStore.tasks;
+		const result: (AreaWithProjects & { taskCount: number })[] = [];
 
-		// Projects with areas
 		for (const area of areas) {
 			const projects = projectStore.projectsByArea(area.id);
-			if (projects.length > 0 || true) { // Show all areas even if empty
-				result.push({ area, projects });
-			}
+			const projectIds = new Set(projects.map(p => p.id));
+			const taskCount = tasks.filter(t =>
+				!t.is_completed && !t.deleted_at &&
+				(t.area_id === area.id || (t.project_id != null && projectIds.has(t.project_id)))
+			).length;
+			result.push({ area, projects, taskCount });
 		}
 
 		// Projects without area
 		const projectsWithoutArea = projectStore.projectsByArea(null);
 		if (projectsWithoutArea.length > 0) {
-			result.push({ area: null, projects: projectsWithoutArea });
+			const projectIds = new Set(projectsWithoutArea.map(p => p.id));
+			const taskCount = tasks.filter(t =>
+				!t.is_completed && !t.deleted_at && t.project_id != null && projectIds.has(t.project_id)
+			).length;
+			result.push({ area: null, projects: projectsWithoutArea, taskCount });
 		}
 
 		return result;
@@ -66,6 +73,17 @@
 			onClose();
 		}
 	}
+
+	// Search functionality
+	let searchQuery = $state('');
+
+	function handleSearch(e: Event) {
+		e.preventDefault();
+		if (searchQuery.trim()) {
+			// Navigate to search page with query
+			window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
+		}
+	}
 </script>
 
 <!-- Mobile overlay -->
@@ -90,6 +108,23 @@
 	<div class="p-4 border-b border-gray-200">
 		<h1 class="text-xl font-bold text-gray-900">Thufir</h1>
 		<p class="text-xs text-gray-500 mt-1">Local-first tasks</p>
+	</div>
+
+	<!-- Search box -->
+	<div class="px-4 pt-4 pb-2">
+		<form onsubmit={handleSearch} class="relative">
+			<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+				<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+				</svg>
+			</div>
+			<input
+				type="text"
+				bind:value={searchQuery}
+				placeholder="Search tasks..."
+				class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+			/>
+		</form>
 	</div>
 
 	<nav class="flex-1 overflow-y-auto p-4 space-y-6">
@@ -189,32 +224,41 @@
 					Areas & Projects
 				</h3>
 
-				{#each areasWithProjects as { area, projects }}
+				{#each areasWithProjects as { area, projects, taskCount }}
 					<div>
 						{#if area}
 							<!-- Area with toggle -->
-							<button
-								onclick={() => toggleArea(area.id)}
-								class="w-full flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors text-left"
+							<a
+								href="/areas/{area.id}"
+								onclick={handleLinkClick}
+								class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+								class:bg-blue-50={isActive(`/areas/${area.id}`)}
+								class:text-blue-700={isActive(`/areas/${area.id}`)}
 							>
-								<div class="flex items-center gap-2">
-									<svg
-										class="w-4 h-4 transition-transform"
-										class:rotate-90={expandedAreas.has(area.id)}
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
+								<div class="flex items-center gap-2 flex-1 min-w-0">
+									<button
+										onclick={(e) => { e.preventDefault(); e.stopPropagation(); toggleArea(area.id); }}
+										class="flex-shrink-0 p-0.5 -ml-0.5 rounded hover:bg-gray-200 transition-colors"
+										aria-label={expandedAreas.has(area.id) ? 'Collapse area' : 'Expand area'}
 									>
-										<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-									</svg>
+										<svg
+											class="w-4 h-4 transition-transform"
+											class:rotate-90={expandedAreas.has(area.id)}
+											fill="none"
+											stroke="currentColor"
+											viewBox="0 0 24 24"
+										>
+											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+										</svg>
+									</button>
 									<div
-										class="w-3 h-3 rounded-full"
+										class="w-3 h-3 rounded-full flex-shrink-0"
 										style:background-color={area.color || '#9ca3af'}
 									></div>
-									<span class="font-medium">{area.name}</span>
+									<span class="font-medium truncate">{area.name}</span>
 								</div>
-								<span class="text-xs text-gray-500">{projects.length}</span>
-							</button>
+								{#if taskCount > 0}<span class="text-xs text-gray-500 flex-shrink-0">{taskCount}</span>{/if}
+							</a>
 
 							<!-- Projects under this area -->
 							{#if expandedAreas.has(area.id)}

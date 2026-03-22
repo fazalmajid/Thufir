@@ -1,6 +1,11 @@
 <script lang="ts">
+	import { onMount } from 'svelte';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import TaskList from '$lib/components/task/TaskList.svelte';
+
+	onMount(() => {
+		taskStore.load({ status: 'completed' });
+	});
 </script>
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">

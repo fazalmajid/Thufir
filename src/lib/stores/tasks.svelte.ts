@@ -3,55 +3,67 @@ import type { Task, CreateTaskInput, UpdateTaskInput } from '$lib/types/task';
 
 // Svelte 5 runes-based store
 class TaskStore {
-	tasks = $state<Task[]>([]);
+	tasks = $state.raw<Task[]>([]);
 	loading = $state(false);
 	error = $state<string | null>(null);
 
 	// Derived states for different views
 	get inboxTasks() {
-		return this.tasks.filter(
-			(t) => t.status === 'inbox' && !t.is_completed && !t.deleted_at
-		);
+		return this.tasks
+			.filter((t) => t.status === 'inbox' && !t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order);
 	}
 
 	get todayTasks() {
-		return this.tasks.filter(
-			(t) => t.status === 'today' && !t.is_completed && !t.deleted_at
-		);
+		return this.tasks
+			.filter((t) => t.status === 'today' && !t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order);
 	}
 
 	get upcomingTasks() {
-		return this.tasks.filter(
-			(t) => t.status === 'upcoming' && !t.is_completed && !t.deleted_at
-		);
+		return this.tasks
+			.filter((t) => t.status === 'upcoming' && !t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order);
 	}
 
 	get anytimeTasks() {
-		return this.tasks.filter(
-			(t) => t.status === 'anytime' && !t.is_completed && !t.deleted_at
-		);
+		return this.tasks
+			.filter((t) => t.status === 'anytime' && !t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order);
 	}
 
 	get somedayTasks() {
-		return this.tasks.filter(
-			(t) => t.status === 'someday' && !t.is_completed && !t.deleted_at
-		);
+		return this.tasks
+			.filter((t) => t.status === 'someday' && !t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order);
 	}
 
 	get completedTasks() {
-		return this.tasks.filter((t) => t.is_completed && !t.deleted_at);
+		return this.tasks
+			.filter((t) => t.is_completed && !t.deleted_at)
+			.sort((a, b) => a.sort_order - b.sort_order);
 	}
 
 	get trashedTasks() {
 		return this.tasks.filter((t) => t.deleted_at !== null);
 	}
 
-	async load() {
+	async load(params?: { status?: string; project_id?: string; area_id?: string }) {
 		this.loading = true;
 		this.error = null;
 
 		try {
-			this.tasks = await taskAPI.list();
+			const fetched = await taskAPI.list(params);
+			if (params) {
+				// Merge fetched tasks into the store, replacing any with matching status/scope
+				const fetchedIds = new Set(fetched.map((t) => t.id));
+				this.tasks = [
+					...this.tasks.filter((t) => !fetchedIds.has(t.id)),
+					...fetched
+				];
+			} else {
+				this.tasks = fetched;
+			}
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to load tasks';
 			console.error('Failed to load tasks:', err);

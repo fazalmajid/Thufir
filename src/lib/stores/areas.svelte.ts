@@ -2,7 +2,7 @@ import { areaAPI } from '$lib/services/api';
 import type { Area } from '$lib/types/area';
 
 class AreaStore {
-	areas = $state<Area[]>([]);
+	areas = $state.raw<Area[]>([]);
 	loading = $state(false);
 	error = $state<string | null>(null);
 

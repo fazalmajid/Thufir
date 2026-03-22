@@ -1,15 +1,27 @@
 <script lang="ts">
 	import type { Task } from '$lib/types/task';
 	import { taskStore } from '$lib/stores/tasks.svelte';
+	import { projectStore } from '$lib/stores/projects.svelte';
+	import { areaStore } from '$lib/stores/areas.svelte';
 	import { marked } from 'marked';
 	import { tick } from 'svelte';
 
 	interface Props {
 		task: Task;
 		draggable?: boolean;
+		showContext?: boolean;
 	}
 
-	let { task, draggable = false }: Props = $props();
+	let { task, draggable = false, showContext = false }: Props = $props();
+
+	let contextLabel = $derived.by(() => {
+		if (!showContext) return null;
+		const project = task.project_id ? projectStore.projects.find(p => p.id === task.project_id) : null;
+		const areaId = project?.area_id ?? task.area_id;
+		const area = areaId ? areaStore.areas.find(a => a.id === areaId) : null;
+		const parts = [area?.name, project?.name].filter(Boolean);
+		return parts.length ? parts.join(' › ') : null;
+	});
 	let notesExpanded = $state(false);
 	let isEditing = $state(false);
 	let editedTitle = $state('');
@@ -431,8 +443,12 @@
 				</div>
 			{/if}
 
+			{#if contextLabel}
+				<p class="text-xs text-gray-400 mt-0.5 ml-5">{contextLabel}</p>
+			{/if}
+
 			{#if task.tags && task.tags.length > 0}
-				<div class="flex gap-1.5 mt-1 ml-5">
+				<div class="flex flex-wrap gap-1.5 mt-1 ml-5">
 					{#each task.tags as tag}
 						<span class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">{tag}</span>
 					{/each}

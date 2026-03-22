@@ -18,8 +18,10 @@
 	}
 
 	onMount(() => {
-		// Load all data on app start
-		taskStore.load();
+		// Load only active tasks on startup (excludes 6000+ completed tasks)
+		// Logbook loads completed tasks on demand; project pages load their own tasks
+		const activeStatuses = ['inbox', 'today', 'upcoming', 'anytime', 'someday'];
+		Promise.all(activeStatuses.map((status) => taskStore.load({ status })));
 		projectStore.load();
 		areaStore.load();
 	});
