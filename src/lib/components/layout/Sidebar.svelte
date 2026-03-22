@@ -3,6 +3,8 @@
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
+	import SidebarDropZone from './SidebarDropZone.svelte';
+	import type { Task } from '$lib/types/task';
 
 	interface Props {
 		isOpen?: boolean;
@@ -74,6 +76,32 @@
 		}
 	}
 
+	function topSortOrder(targetTasks: { sort_order: number }[]): number {
+		if (targetTasks.length === 0) return 0;
+		return Math.min(...targetTasks.map((t) => t.sort_order)) - 1;
+	}
+
+	function dropToStatus(task: Task, status: string, extra: Record<string, unknown> = {}) {
+		const target = taskStore.tasks.filter(
+			(t) => t.status === status && !t.is_completed && !t.deleted_at
+		);
+		taskStore.update(task.id, { status, sort_order: topSortOrder(target), ...extra });
+	}
+
+	function dropToArea(task: Task, areaId: string) {
+		const target = taskStore.tasks.filter(
+			(t) => t.area_id === areaId && !t.project_id && !t.is_completed && !t.deleted_at
+		);
+		taskStore.update(task.id, { area_id: areaId, project_id: null, sort_order: topSortOrder(target) });
+	}
+
+	function dropToProject(task: Task, projectId: string, areaId: string | null) {
+		const target = taskStore.tasks.filter(
+			(t) => t.project_id === projectId && !t.is_completed && !t.deleted_at
+		);
+		taskStore.update(task.id, { project_id: projectId, area_id: areaId, sort_order: topSortOrder(target) });
+	}
+
 	// Search functionality
 	let searchQuery = $state('');
 
@@ -130,91 +158,101 @@
 	<nav class="flex-1 overflow-y-auto p-4 space-y-6">
 		<!-- Main Views -->
 		<div class="space-y-1">
-			<a
-				href="/inbox"
-				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/inbox')}
-				class:text-blue-700={isActive('/inbox')}
-				class:font-medium={isActive('/inbox')}
-			>
-				<div class="flex items-center gap-2">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-					</svg>
-					<span>Inbox</span>
-				</div>
-				{#if inboxCount > 0}
-					<span class="text-xs font-semibold text-gray-500">{inboxCount}</span>
-				{/if}
-			</a>
+			<SidebarDropZone onDrop={(task: Task) => dropToStatus(task, 'inbox', { area_id: null, project_id: null })}>
+				<a
+					href="/inbox"
+					onclick={handleLinkClick}
+					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+					class:bg-blue-50={isActive('/inbox')}
+					class:text-blue-700={isActive('/inbox')}
+					class:font-medium={isActive('/inbox')}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+						</svg>
+						<span>Inbox</span>
+					</div>
+					{#if inboxCount > 0}
+						<span class="text-xs font-semibold text-gray-500">{inboxCount}</span>
+					{/if}
+				</a>
+			</SidebarDropZone>
 
-			<a
-				href="/today"
-				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/today')}
-				class:text-blue-700={isActive('/today')}
-				class:font-medium={isActive('/today')}
-			>
-				<div class="flex items-center gap-2">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-					</svg>
-					<span>Today</span>
-				</div>
-				{#if todayCount > 0}
-					<span class="text-xs font-semibold text-gray-500">{todayCount}</span>
-				{/if}
-			</a>
+			<SidebarDropZone onDrop={(task: Task) => dropToStatus(task, 'today')}>
+				<a
+					href="/today"
+					onclick={handleLinkClick}
+					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+					class:bg-blue-50={isActive('/today')}
+					class:text-blue-700={isActive('/today')}
+					class:font-medium={isActive('/today')}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+						</svg>
+						<span>Today</span>
+					</div>
+					{#if todayCount > 0}
+						<span class="text-xs font-semibold text-gray-500">{todayCount}</span>
+					{/if}
+				</a>
+			</SidebarDropZone>
 
-			<a
-				href="/upcoming"
-				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/upcoming')}
-				class:text-blue-700={isActive('/upcoming')}
-				class:font-medium={isActive('/upcoming')}
-			>
-				<div class="flex items-center gap-2">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-					</svg>
-					<span>Upcoming</span>
-				</div>
-			</a>
+			<SidebarDropZone onDrop={(task: Task) => dropToStatus(task, 'upcoming')}>
+				<a
+					href="/upcoming"
+					onclick={handleLinkClick}
+					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+					class:bg-blue-50={isActive('/upcoming')}
+					class:text-blue-700={isActive('/upcoming')}
+					class:font-medium={isActive('/upcoming')}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
+						</svg>
+						<span>Upcoming</span>
+					</div>
+				</a>
+			</SidebarDropZone>
 
-			<a
-				href="/anytime"
-				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/anytime')}
-				class:text-blue-700={isActive('/anytime')}
-				class:font-medium={isActive('/anytime')}
-			>
-				<div class="flex items-center gap-2">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-					</svg>
-					<span>Anytime</span>
-				</div>
-			</a>
+			<SidebarDropZone onDrop={(task: Task) => dropToStatus(task, 'anytime')}>
+				<a
+					href="/anytime"
+					onclick={handleLinkClick}
+					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+					class:bg-blue-50={isActive('/anytime')}
+					class:text-blue-700={isActive('/anytime')}
+					class:font-medium={isActive('/anytime')}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+						</svg>
+						<span>Anytime</span>
+					</div>
+				</a>
+			</SidebarDropZone>
 
-			<a
-				href="/someday"
-				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/someday')}
-				class:text-blue-700={isActive('/someday')}
-				class:font-medium={isActive('/someday')}
-			>
-				<div class="flex items-center gap-2">
-					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-						<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
-					</svg>
-					<span>Someday</span>
-				</div>
-			</a>
+			<SidebarDropZone onDrop={(task: Task) => dropToStatus(task, 'someday')}>
+				<a
+					href="/someday"
+					onclick={handleLinkClick}
+					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+					class:bg-blue-50={isActive('/someday')}
+					class:text-blue-700={isActive('/someday')}
+					class:font-medium={isActive('/someday')}
+				>
+					<div class="flex items-center gap-2">
+						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+							<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 21v-4m0 0V5a2 2 0 012-2h6.5l1 1H21l-3 6 3 6h-8.5l-1-1H5a2 2 0 00-2 2zm9-13.5V9" />
+						</svg>
+						<span>Someday</span>
+					</div>
+				</a>
+			</SidebarDropZone>
 		</div>
 
 		<!-- Areas & Projects -->
@@ -228,51 +266,51 @@
 					<div>
 						{#if area}
 							<!-- Area with toggle -->
-							<a
-								href="/areas/{area.id}"
-								onclick={handleLinkClick}
-								class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-								class:bg-blue-50={isActive(`/areas/${area.id}`)}
-								class:text-blue-700={isActive(`/areas/${area.id}`)}
-							>
-								<div class="flex items-center gap-2 flex-1 min-w-0">
-									<button
-										onclick={(e) => { e.preventDefault(); e.stopPropagation(); toggleArea(area.id); }}
-										class="flex-shrink-0 p-0.5 -ml-0.5 rounded hover:bg-gray-200 transition-colors"
-										aria-label={expandedAreas.has(area.id) ? 'Collapse area' : 'Expand area'}
-									>
-										<svg
-											class="w-4 h-4 transition-transform"
-											class:rotate-90={expandedAreas.has(area.id)}
-											fill="none"
-											stroke="currentColor"
-											viewBox="0 0 24 24"
+							<SidebarDropZone onDrop={(task) => dropToArea(task, area.id)}>
+								<a
+									href="/areas/{area.id}"
+									onclick={handleLinkClick}
+									class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
+									class:bg-blue-50={isActive(`/areas/${area.id}`)}
+									class:text-blue-700={isActive(`/areas/${area.id}`)}
+								>
+									<div class="flex items-center gap-2 flex-1 min-w-0">
+										<button
+											onclick={(e) => { e.preventDefault(); e.stopPropagation(); toggleArea(area.id); }}
+											class="flex-shrink-0 p-0.5 -ml-0.5 rounded hover:bg-gray-200 transition-colors"
+											aria-label={expandedAreas.has(area.id) ? 'Collapse area' : 'Expand area'}
 										>
-											<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
-										</svg>
-									</button>
-									<div
-										class="w-3 h-3 rounded-full flex-shrink-0"
-										style:background-color={area.color || '#9ca3af'}
-									></div>
-									<span class="font-medium truncate">{area.name}</span>
-								</div>
-								{#if taskCount > 0}<span class="text-xs text-gray-500 flex-shrink-0">{taskCount}</span>{/if}
-							</a>
+											<svg
+												class="w-4 h-4 transition-transform"
+												class:rotate-90={expandedAreas.has(area.id)}
+												fill="none"
+												stroke="currentColor"
+												viewBox="0 0 24 24"
+											>
+												<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7" />
+											</svg>
+										</button>
+										<span class="font-medium truncate">{area.name}</span>
+									</div>
+									{#if taskCount > 0}<span class="text-xs text-gray-500 flex-shrink-0">{taskCount}</span>{/if}
+								</a>
+							</SidebarDropZone>
 
 							<!-- Projects under this area -->
 							{#if expandedAreas.has(area.id)}
 								<div class="ml-6 mt-1 space-y-1">
 									{#each projects as project}
-										<a
-											onclick={handleLinkClick}
-							href="/projects/{project.id}"
-											class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-											class:bg-blue-50={isActive(`/projects/${project.id}`)}
-											class:text-blue-700={isActive(`/projects/${project.id}`)}
-										>
-											<span>{project.name}</span>
-										</a>
+										<SidebarDropZone onDrop={(task) => dropToProject(task, project.id, project.area_id ?? null)}>
+											<a
+												onclick={handleLinkClick}
+												href="/projects/{project.id}"
+												class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+												class:bg-blue-50={isActive(`/projects/${project.id}`)}
+												class:text-blue-700={isActive(`/projects/${project.id}`)}
+											>
+												<span>{project.name}</span>
+											</a>
+										</SidebarDropZone>
 									{/each}
 								</div>
 							{/if}
@@ -281,15 +319,17 @@
 							<div class="space-y-1">
 								<div class="px-3 py-1 text-sm text-gray-500 font-medium">Projects</div>
 								{#each projects as project}
-									<a
-										onclick={handleLinkClick}
-							href="/projects/{project.id}"
-										class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-										class:bg-blue-50={isActive(`/projects/${project.id}`)}
-										class:text-blue-700={isActive(`/projects/${project.id}`)}
-									>
-										<span>{project.name}</span>
-									</a>
+									<SidebarDropZone onDrop={(task) => dropToProject(task, project.id, null)}>
+										<a
+											onclick={handleLinkClick}
+											href="/projects/{project.id}"
+											class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
+											class:bg-blue-50={isActive(`/projects/${project.id}`)}
+											class:text-blue-700={isActive(`/projects/${project.id}`)}
+										>
+											<span>{project.name}</span>
+										</a>
+									</SidebarDropZone>
 								{/each}
 							</div>
 						{/if}

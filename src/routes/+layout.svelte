@@ -3,6 +3,7 @@
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
+	import { dragStore } from '$lib/stores/drag.svelte';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import '../app.css';
@@ -16,6 +17,25 @@
 	function closeMobileMenu() {
 		isMobileMenuOpen = false;
 	}
+
+	$effect(() => {
+		if (!dragStore.task) return;
+
+		function onMove(e: PointerEvent) {
+			dragStore.updateActiveZone(e.clientX, e.clientY);
+		}
+		function onUp() {
+			dragStore.drop();
+		}
+
+		document.addEventListener('pointermove', onMove, { passive: true });
+		document.addEventListener('pointerup', onUp, { capture: true, once: true });
+
+		return () => {
+			document.removeEventListener('pointermove', onMove);
+			document.removeEventListener('pointerup', onUp, { capture: true });
+		};
+	});
 
 	onMount(() => {
 		// Load only active tasks on startup (excludes 6000+ completed tasks)

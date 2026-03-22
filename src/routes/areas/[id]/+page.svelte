@@ -20,10 +20,7 @@
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	{#if area}
-		<div class="mb-4 flex items-center gap-3">
-			{#if area.color}
-				<div class="w-4 h-4 rounded-full flex-shrink-0" style:background-color={area.color}></div>
-			{/if}
+		<div class="mb-4">
 			<h1 class="text-2xl font-bold text-gray-900">{area.name}</h1>
 		</div>
 
