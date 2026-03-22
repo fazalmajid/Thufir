@@ -37,6 +37,7 @@ A local-first, self-hosted PWA to replace Cultured Code's Things app, built with
 ### Prerequisites:
 - Docker and Docker Compose
 - Node.js 20+
+- PostgreSQL with the `uuid-ossp` extension installed (`CREATE EXTENSION IF NOT EXISTS "uuid-ossp";`)
 
 ### Start the Backend:
 ```bash
