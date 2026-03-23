@@ -41,7 +41,7 @@ class TaskStore {
 	get completedTasks() {
 		return this.tasks
 			.filter((t) => t.is_completed && !t.deleted_at)
-			.sort((a, b) => a.sort_order - b.sort_order);
+			.sort((a, b) => new Date(b.completed_at!).getTime() - new Date(a.completed_at!).getTime());
 	}
 
 	get trashedTasks() {
