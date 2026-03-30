@@ -12,3 +12,4 @@ vite.config.ts.timestamp-*
 things.db
 __pycache__
 .claude
+*~
