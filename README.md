@@ -85,6 +85,10 @@ thufir/
 └── static/                 # Static assets
 ```
 
+## Known Limitations
+
+- **No recurring tasks**: There is no support for repeating tasks. The database schema, API, and UI have no recurrence fields or logic.
+
 ## Next Steps
 
 - [ ] Add ElectricSQL real-time sync

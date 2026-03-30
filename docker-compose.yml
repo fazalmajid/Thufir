@@ -19,8 +19,10 @@ services:
       dockerfile: Dockerfile
     environment:
       DATABASE_URL: "postgresql://thufir:${POSTGRES_PASSWORD:-UI0iW4-7DJ6Go-zBwcn4}@zulfiqar:5432/thufir"
-      NODE_ENV: development
+      NODE_ENV: "${NODE_ENV:-development}"
       PORT: 3001
+      RP_ID: "${RP_ID:-localhost}"
+      RP_ORIGIN: "${RP_ORIGIN:-http://localhost:5173}"
     ports:
       - "3001:3001"
     volumes:
@@ -34,15 +36,13 @@ services:
     build:
       context: .
       dockerfile: docker/frontend/Dockerfile
+      args:
+        VITE_API_URL: "${VITE_API_URL:-http://localhost:3001}"
+        VITE_ELECTRIC_URL: "${VITE_ELECTRIC_URL:-http://localhost:3000}"
     environment:
-      NODE_ENV: development
-      VITE_API_URL: "http://localhost:3001"
-      VITE_ELECTRIC_URL: "http://localhost:3000"
+      NODE_ENV: "${NODE_ENV:-development}"
     ports:
       - "5173:5173"
-    volumes:
-      - .:/app
-      - /app/node_modules
     depends_on:
       - electric
       - api

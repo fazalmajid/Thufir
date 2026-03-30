@@ -1,5 +1,8 @@
 <script lang="ts">
+	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
+	import { goto } from '$app/navigation';
+	import { page } from '$app/stores';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
@@ -8,7 +11,12 @@
 	import Header from '$lib/components/layout/Header.svelte';
 	import '../app.css';
 
+	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+
+	let { children }: { children: Snippet } = $props();
 	let isMobileMenuOpen = $state(false);
+	let authReady = $state(false);
+	let isAuthenticated = $state(false);
 
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
@@ -37,9 +45,26 @@
 		};
 	});
 
-	onMount(() => {
-		// Load only active tasks on startup (excludes 6000+ completed tasks)
-		// Logbook loads completed tasks on demand; project pages load their own tasks
+	onMount(async () => {
+		if ($page.url.pathname === '/login') {
+			authReady = true;
+			return;
+		}
+
+		try {
+			const res = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
+			if (!res.ok) {
+				goto('/login');
+				return;
+			}
+		} catch {
+			goto('/login');
+			return;
+		}
+
+		isAuthenticated = true;
+		authReady = true;
+
 		const activeStatuses = ['inbox', 'today', 'upcoming', 'anytime', 'someday'];
 		Promise.all(activeStatuses.map((status) => taskStore.load({ status })));
 		projectStore.load();
@@ -47,12 +72,16 @@
 	});
 </script>
 
-<div class="flex h-screen overflow-hidden">
-	<Sidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
-	<div class="flex-1 flex flex-col overflow-hidden">
-		<Header onMenuToggle={toggleMobileMenu} />
-		<main class="flex-1 overflow-y-auto bg-gray-50">
-			<slot />
-		</main>
+{#if $page.url.pathname === '/login'}
+	{@render children()}
+{:else if authReady && isAuthenticated}
+	<div class="flex h-screen overflow-hidden">
+		<Sidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
+		<div class="flex-1 flex flex-col overflow-hidden">
+			<Header onMenuToggle={toggleMobileMenu} />
+			<main class="flex-1 overflow-y-auto bg-gray-50">
+				{@render children()}
+			</main>
+		</div>
 	</div>
-</div>
+{/if}
