@@ -1,4 +1,5 @@
--- Enable UUID extension
+-- +goose Up
+
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Auth: Users (created first — referenced by data tables)
@@ -143,3 +144,19 @@ CREATE TRIGGER update_areas_updated_at    BEFORE UPDATE ON areas    FOR EACH ROW
 CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_tasks_updated_at    BEFORE UPDATE ON tasks    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 CREATE TRIGGER update_tags_updated_at     BEFORE UPDATE ON tags     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+
+-- +goose Down
+
+DROP TRIGGER IF EXISTS update_tags_updated_at     ON tags;
+DROP TRIGGER IF EXISTS update_tasks_updated_at    ON tasks;
+DROP TRIGGER IF EXISTS update_projects_updated_at ON projects;
+DROP TRIGGER IF EXISTS update_areas_updated_at    ON areas;
+DROP FUNCTION IF EXISTS update_updated_at_column();
+
+DROP TABLE IF EXISTS tags;
+DROP TABLE IF EXISTS tasks;
+DROP TABLE IF EXISTS projects;
+DROP TABLE IF EXISTS areas;
+DROP TABLE IF EXISTS sessions;
+DROP TABLE IF EXISTS credentials;
+DROP TABLE IF EXISTS users;

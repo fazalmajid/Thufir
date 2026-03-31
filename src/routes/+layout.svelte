@@ -7,11 +7,11 @@
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
 	import { dragStore } from '$lib/stores/drag.svelte';
+	import { startReplication } from '$lib/db/replication';
+	import { getDB } from '$lib/db/index';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
 	import '../app.css';
-
-	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 
 	let { children }: { children: Snippet } = $props();
 	let isMobileMenuOpen = $state(false);
@@ -51,8 +51,9 @@
 			return;
 		}
 
+		// Check authentication (auth is still REST-based).
 		try {
-			const res = await fetch(`${API_URL}/api/auth/me`, { credentials: 'include' });
+			const res = await fetch('/api/auth/me', { credentials: 'include' });
 			if (!res.ok) {
 				goto('/login');
 				return;
@@ -65,10 +66,12 @@
 		isAuthenticated = true;
 		authReady = true;
 
-		const activeStatuses = ['inbox', 'today', 'upcoming', 'anytime', 'someday'];
-		Promise.all(activeStatuses.map((status) => taskStore.load({ status })));
-		projectStore.load();
-		areaStore.load();
+		// Initialise RxDB and subscribe to reactive queries.
+		const db = await getDB();
+		await Promise.all([taskStore.init(), areaStore.init(), projectStore.init()]);
+
+		// Start background sync with the Go server.
+		startReplication(db);
 	});
 </script>
 

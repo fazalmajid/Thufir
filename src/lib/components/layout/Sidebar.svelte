@@ -127,10 +127,10 @@
 		}
 	}
 
-	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+	
 
 	async function handleLogout() {
-		await fetch(`${API_URL}/api/auth/logout`, { method: 'POST', credentials: 'include' });
+		await fetch(`/api/auth/logout`, { method: 'POST', credentials: 'include' });
 		window.location.href = '/login';
 	}
 </script>

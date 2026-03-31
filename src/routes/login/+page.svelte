@@ -3,8 +3,6 @@
 	import { goto } from '$app/navigation';
 	import { startRegistration, startAuthentication } from '@simplewebauthn/browser';
 
-	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
-
 	type Mode = 'loading' | 'login' | 'setup';
 
 	let mode = $state<Mode>('loading');
@@ -14,7 +12,7 @@
 	let busy = $state(false);
 
 	onMount(async () => {
-		const res = await fetch(`${API_URL}/api/auth/status`);
+		const res = await fetch(`/api/auth/status`);
 		const { hasUsers } = await res.json();
 		mode = hasUsers ? 'login' : 'setup';
 	});
@@ -23,7 +21,7 @@
 		busy = true;
 		error = '';
 		try {
-			const optRes = await fetch(`${API_URL}/api/auth/login/options`, {
+			const optRes = await fetch(`/api/auth/login/options`, {
 				method: 'POST',
 				credentials: 'include',
 			});
@@ -32,7 +30,7 @@
 
 			const authResp = await startAuthentication({ optionsJSON: options });
 
-			const verifyRes = await fetch(`${API_URL}/api/auth/login/verify`, {
+			const verifyRes = await fetch(`/api/auth/login/verify`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
@@ -64,7 +62,7 @@
 		busy = true;
 		error = '';
 		try {
-			const optRes = await fetch(`${API_URL}/api/auth/setup/options`, {
+			const optRes = await fetch(`/api/auth/setup/options`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
@@ -78,7 +76,7 @@
 
 			const regResp = await startRegistration({ optionsJSON: options });
 
-			const verifyRes = await fetch(`${API_URL}/api/auth/setup/verify`, {
+			const verifyRes = await fetch(`/api/auth/setup/verify`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },

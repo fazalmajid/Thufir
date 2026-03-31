@@ -1,13 +1,13 @@
-import { taskAPI } from '$lib/services/api';
+import { getDB } from '$lib/db/index';
 import type { Task, CreateTaskInput, UpdateTaskInput } from '$lib/types/task';
 
-// Svelte 5 runes-based store
 class TaskStore {
 	tasks = $state.raw<Task[]>([]);
 	loading = $state(false);
 	error = $state<string | null>(null);
 
-	// Derived states for different views
+	// ── Derived views ────────────────────────────────────────────────────────
+
 	get inboxTasks() {
 		return this.tasks
 			.filter((t) => t.status === 'inbox' && !t.is_completed && !t.deleted_at)
@@ -45,58 +45,62 @@ class TaskStore {
 	}
 
 	get trashedTasks() {
-		return this.tasks.filter((t) => t.deleted_at !== null);
+		return this.tasks.filter((t) => !!t.deleted_at);
 	}
 
-	async load(params?: { status?: string; project_id?: string; area_id?: string }) {
-		this.loading = true;
-		this.error = null;
+	// ── Initialisation (call once after auth) ─────────────────────────────────
 
+	async init() {
+		this.loading = true;
 		try {
-			const fetched = await taskAPI.list(params);
-			if (params) {
-				// Merge fetched tasks into the store, replacing any with matching status/scope
-				const fetchedIds = new Set(fetched.map((t) => t.id));
-				this.tasks = [
-					...this.tasks.filter((t) => !fetchedIds.has(t.id)),
-					...fetched
-				];
-			} else {
-				this.tasks = fetched;
-			}
+			const db = await getDB();
+			// Live query — re-runs whenever any task changes locally or syncs.
+			db.tasks
+				.find({ selector: {}, sort: [{ sort_order: 'asc' }] })
+				.$.subscribe((docs) => {
+					this.tasks = docs.map((d) => d.toJSON() as Task);
+					this.loading = false;
+				});
 		} catch (err) {
-			this.error = err instanceof Error ? err.message : 'Failed to load tasks';
-			console.error('Failed to load tasks:', err);
-		} finally {
+			this.error = err instanceof Error ? err.message : 'Failed to init tasks';
 			this.loading = false;
 		}
 	}
 
+	// ── Mutations ─────────────────────────────────────────────────────────────
+
 	async create(input: Omit<CreateTaskInput, 'id'>) {
-		const data: CreateTaskInput = {
+		const db = await getDB();
+		const now = new Date().toISOString();
+		const doc = {
 			id: crypto.randomUUID(),
+			status: 'inbox' as const,
+			is_completed: false,
+			is_flagged: false,
+			priority: 0,
+			sort_order: 0,
+			tags: [],
+			created_at: now,
+			updated_at: now,
 			...input
 		};
-
 		try {
-			const newTask = await taskAPI.create(data);
-			this.tasks = [...this.tasks, newTask];
-			return newTask;
+			await db.tasks.insert(doc);
+			return doc;
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to create task';
-			console.error('Failed to create task:', err);
 			throw err;
 		}
 	}
 
 	async update(id: string, updates: UpdateTaskInput) {
+		const db = await getDB();
+		const doc = await db.tasks.findOne(id).exec();
+		if (!doc) throw new Error(`Task ${id} not found`);
 		try {
-			const updated = await taskAPI.update(id, updates);
-			this.tasks = this.tasks.map((t) => (t.id === id ? updated : t));
-			return updated;
+			await doc.patch(updates);
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to update task';
-			console.error('Failed to update task:', err);
 			throw err;
 		}
 	}
@@ -104,56 +108,46 @@ class TaskStore {
 	async toggleComplete(id: string) {
 		const task = this.tasks.find((t) => t.id === id);
 		if (!task) return;
-
-		return this.update(id, { is_completed: !task.is_completed });
+		const now = new Date().toISOString();
+		return this.update(id, {
+			is_completed: !task.is_completed,
+			completed_at: !task.is_completed ? now : null,
+			status: !task.is_completed ? 'completed' : task.status
+		});
 	}
 
 	async delete(id: string) {
+		const db = await getDB();
+		const doc = await db.tasks.findOne(id).exec();
+		if (!doc) return;
 		try {
-			await taskAPI.delete(id);
-			// Update local state to mark as deleted
-			this.tasks = this.tasks.map((t) =>
-				t.id === id ? { ...t, deleted_at: new Date().toISOString() } : t
-			);
+			// Soft delete: set deleted_at; RxDB replication pushes the change.
+			await doc.patch({ deleted_at: new Date().toISOString() });
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to delete task';
-			console.error('Failed to delete task:', err);
 			throw err;
 		}
 	}
 
 	async restore(id: string) {
+		const db = await getDB();
+		const doc = await db.tasks.findOne(id).exec();
+		if (!doc) return;
 		try {
-			const restored = await taskAPI.restore(id);
-			this.tasks = this.tasks.map((t) => (t.id === id ? restored : t));
-			return restored;
+			await doc.patch({ deleted_at: null });
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to restore task';
-			console.error('Failed to restore task:', err);
 			throw err;
 		}
 	}
 
 	async reorder(reorderedTasks: Task[]) {
-		// Update local state immediately for responsiveness
-		const updates = reorderedTasks.map((task, index) => ({
-			id: task.id,
-			sort_order: index
-		}));
-
-		// Optimistically update local state
-		const taskMap = new Map(reorderedTasks.map((task, index) => [task.id, { ...task, sort_order: index }]));
-		this.tasks = this.tasks.map((t) => taskMap.get(t.id) || t);
-
-		try {
-			await taskAPI.reorder(updates);
-		} catch (err) {
-			this.error = err instanceof Error ? err.message : 'Failed to reorder tasks';
-			console.error('Failed to reorder tasks:', err);
-			// Reload tasks to restore correct order on error
-			await this.load();
-			throw err;
-		}
+		const db = await getDB();
+		await Promise.all(
+			reorderedTasks.map((task, index) =>
+				db.tasks.findOne(task.id).exec().then((doc) => doc?.patch({ sort_order: index }))
+			)
+		);
 	}
 }
 

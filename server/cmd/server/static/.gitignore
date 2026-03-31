@@ -1,0 +1,5 @@
+# This directory is populated at compile time by `npm run build`.
+# Only the placeholder files are tracked in git.
+*
+!.gitignore
+!placeholder.txt

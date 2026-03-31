@@ -2,7 +2,7 @@
 	import { onMount } from 'svelte';
 	import { startRegistration } from '@simplewebauthn/browser';
 
-	const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
+	
 
 	interface Device {
 		id: string;
@@ -19,7 +19,7 @@
 	let success = $state('');
 
 	async function loadDevices() {
-		const res = await fetch(`${API_URL}/api/auth/devices`, { credentials: 'include' });
+		const res = await fetch(`/api/auth/devices`, { credentials: 'include' });
 		devices = await res.json();
 		loading = false;
 	}
@@ -29,7 +29,7 @@
 		error = '';
 		success = '';
 		try {
-			const optRes = await fetch(`${API_URL}/api/auth/device/options`, {
+			const optRes = await fetch(`/api/auth/device/options`, {
 				method: 'POST',
 				credentials: 'include',
 			});
@@ -38,7 +38,7 @@
 
 			const regResp = await startRegistration({ optionsJSON: options });
 
-			const verifyRes = await fetch(`${API_URL}/api/auth/device/verify`, {
+			const verifyRes = await fetch(`/api/auth/device/verify`, {
 				method: 'POST',
 				credentials: 'include',
 				headers: { 'Content-Type': 'application/json' },
@@ -67,7 +67,7 @@
 	async function remove(id: string) {
 		error = '';
 		success = '';
-		const res = await fetch(`${API_URL}/api/auth/devices/${id}`, {
+		const res = await fetch(`/api/auth/devices/${id}`, {
 			method: 'DELETE',
 			credentials: 'include',
 		});
