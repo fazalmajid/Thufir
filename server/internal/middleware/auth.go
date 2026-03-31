@@ -45,3 +45,4 @@ func UserFromCtx(ctx context.Context) (auth.UserInfo, bool) {
 	v, ok := ctx.Value(userKey).(auth.UserInfo)
 	return v, ok
 }
+

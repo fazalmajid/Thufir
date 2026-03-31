@@ -12,7 +12,7 @@ import (
 )
 
 // HandlePush returns the push handler for the given collection.
-// collection must be one of "tasks", "projects", or "areas".
+// collection must be one of "task", "project", or "area".
 func HandlePush(collection string, pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		userID, ok := userIDFromRequest(r)
@@ -107,11 +107,11 @@ func HandlePush(collection string, pool *pgxpool.Pool) http.HandlerFunc {
 // upsertDocument routes to the collection-specific upsert function.
 func upsertDocument(ctx context.Context, tx pgx.Tx, collection, userID string, doc json.RawMessage) error {
 	switch collection {
-	case "tasks":
+	case "task":
 		return upsertTask(ctx, tx, userID, doc)
-	case "projects":
+	case "project":
 		return upsertProject(ctx, tx, userID, doc)
-	case "areas":
+	case "area":
 		return upsertArea(ctx, tx, userID, doc)
 	}
 	return errors.New("unknown collection: " + collection)

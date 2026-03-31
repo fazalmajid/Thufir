@@ -1,10 +1,12 @@
 package main
 
 import (
+	"fmt"
 	"io/fs"
 	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
@@ -34,7 +36,7 @@ func main() {
 	}
 
 	r := chi.NewRouter()
-	r.Use(chimw.Logger)
+	r.Use(chimw.RequestLogger(&sessionLogFormatter{}))
 	r.Use(chimw.Recoverer)
 	r.Use(corsMiddleware(cfg))
 
@@ -63,12 +65,18 @@ func main() {
 	})
 
 	// ── RxDB replication routes (session required) ────────────────────────────
+	// URL segments (and RxDB collection names) are plural; SQL table names are singular.
+	type collDef struct{ url, table string }
 	r.Route("/api/rxdb", func(r chi.Router) {
 		r.Use(mw.RequireAuth(pool))
-		for _, collection := range []string{"tasks", "projects", "areas"} {
-			c := collection // capture loop var
-			r.Post("/"+c+"/pull", sync.HandlePull(c, pool))
-			r.Post("/"+c+"/push", sync.HandlePush(c, pool))
+		for _, c := range []collDef{
+			{"tasks", "task"},
+			{"projects", "project"},
+			{"areas", "area"},
+		} {
+			c := c // capture loop var
+			r.Post("/"+c.url+"/pull", sync.HandlePull(c.table, pool))
+			r.Post("/"+c.url+"/push", sync.HandlePush(c.table, pool))
 		}
 	})
 
@@ -104,6 +112,37 @@ func corsMiddleware(cfg config.Config) func(http.Handler) http.Handler {
 			next.ServeHTTP(w, r)
 		})
 	}
+}
+
+// sessionLogFormatter is a chi LogFormatter that includes the session ID.
+type sessionLogFormatter struct{}
+
+func (f *sessionLogFormatter) NewLogEntry(r *http.Request) chimw.LogEntry {
+	return &sessionLogEntry{r: r, start: time.Now()}
+}
+
+type sessionLogEntry struct {
+	r     *http.Request
+	start time.Time
+}
+
+func (e *sessionLogEntry) Write(status, bytes int, _ http.Header, elapsed time.Duration, _ any) {
+	sid := "-"
+	if cookie, err := e.r.Cookie("session"); err == nil {
+		sid = cookie.Value
+		if len(sid) > 8 {
+			sid = sid[:8]
+		}
+	}
+	log.Printf("%s %s %d %dB %s session=%s",
+		e.r.Method, e.r.RequestURI, status, bytes,
+		fmt.Sprintf("%.3fms", float64(elapsed.Microseconds())/1000),
+		sid,
+	)
+}
+
+func (e *sessionLogEntry) Panic(v any, stack []byte) {
+	log.Printf("PANIC: %v\n%s", v, stack)
 }
 
 // spaHandler serves files from the embedded FS and falls back to index.html

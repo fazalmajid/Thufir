@@ -71,15 +71,15 @@ func challengeToken(r *http.Request) string {
 func loadUserWithCredentials(r *http.Request, pool *pgxpool.Pool, userID string) (*waUser, error) {
 	var displayName string
 	err := pool.QueryRow(r.Context(), `
-		SELECT display_name FROM users WHERE id = $1::uuid
-	`, userID).Scan(&displayName)
+		SELECT display_name FROM name WHERE id = $1::uuid
+`, userID).Scan(&displayName)
 	if err != nil {
 		return nil, err
 	}
 
 	rows, err := pool.Query(r.Context(), `
 		SELECT credential_id, public_key, sign_count, transports
-		FROM credentials WHERE user_id = $1::uuid
+		FROM credential WHERE user_id = $1::uuid
 	`, userID)
 	if err != nil {
 		return nil, err
@@ -120,7 +120,7 @@ func loadUserWithCredentials(r *http.Request, pool *pgxpool.Pool, userID string)
 func HandleStatus(pool *pgxpool.Pool) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var count int
-		if err := pool.QueryRow(r.Context(), `SELECT COUNT(*)::int FROM users`).Scan(&count); err != nil {
+		if err := pool.QueryRow(r.Context(), `SELECT COUNT(*)::int FROM name`).Scan(&count); err != nil {
 			writeErr(w, http.StatusInternalServerError, "db error")
 			return
 		}
@@ -169,7 +169,7 @@ func HandleSetupOptions(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challenge
 		}
 
 		var count int
-		pool.QueryRow(r.Context(), `SELECT COUNT(*)::int FROM users`).Scan(&count) //nolint:errcheck
+		pool.QueryRow(r.Context(), `SELECT COUNT(*)::int FROM name`).Scan(&count) //nolint:errcheck
 		if count > 0 {
 			writeErr(w, http.StatusForbidden, "Setup already complete")
 			return
@@ -192,14 +192,14 @@ func HandleSetupOptions(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challenge
 			return
 		}
 		setChallengeCookie(w, token, cfg.IsProd)
-		writeJSON(w, http.StatusOK, map[string]any{"options": creation, "userId": userUUID})
+		writeJSON(w, http.StatusOK, map[string]any{"options": creation.Response, "userId": userUUID})
 	}
 }
 
 func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeStore, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 		var count int
-		pool.QueryRow(r.Context(), `SELECT COUNT(*)::int FROM users`).Scan(&count) //nolint:errcheck
+		pool.QueryRow(r.Context(), `SELECT COUNT(*)::int FROM name`).Scan(&count) //nolint:errcheck
 		if count > 0 {
 			writeErr(w, http.StatusForbidden, "Setup already complete")
 			return
@@ -245,7 +245,7 @@ func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 		defer tx.Rollback(r.Context()) //nolint:errcheck
 
 		if _, err := tx.Exec(r.Context(),
-			`INSERT INTO users (id, display_name) VALUES ($1::uuid, $2)`,
+			`INSERT INTO name (id, display_name) VALUES ($1::uuid, $2)`,
 			body.UserID, body.DisplayName,
 		); err != nil {
 			writeErr(w, http.StatusInternalServerError, "create user: "+err.Error())
@@ -257,7 +257,7 @@ func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 			transports[i] = string(t)
 		}
 		if _, err := tx.Exec(r.Context(), `
-			INSERT INTO credentials (user_id, credential_id, public_key, sign_count, transports, device_name)
+			INSERT INTO credential (user_id, credential_id, public_key, sign_count, transports, device_name)
 			VALUES ($1::uuid, $2, $3, $4, $5, $6)
 		`, body.UserID, CredentialIDToBase64(cred.ID), cred.PublicKey,
 			cred.Authenticator.SignCount, transports, body.DeviceName,
@@ -296,7 +296,7 @@ func HandleLoginOptions(wa *webauthn.WebAuthn, cs *ChallengeStore, cfg config.Co
 			return
 		}
 		setChallengeCookie(w, token, cfg.IsProd)
-		writeJSON(w, http.StatusOK, assertion)
+		writeJSON(w, http.StatusOK, assertion.Response)
 	}
 }
 
@@ -343,7 +343,7 @@ func HandleLoginVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 
 		// Update sign count to prevent replay attacks
 		_, _ = pool.Exec(r.Context(), `
-			UPDATE credentials SET sign_count = $1 WHERE credential_id = $2
+			UPDATE credential SET sign_count = $1 WHERE credential_id = $2
 		`, cred.Authenticator.SignCount, CredentialIDToBase64(cred.ID))
 
 		sessionID, err := CreateSession(r.Context(), pool, foundUserID)
@@ -354,7 +354,7 @@ func HandleLoginVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 		setSessionCookie(w, sessionID, cfg.IsProd)
 
 		var displayName string
-		pool.QueryRow(r.Context(), `SELECT display_name FROM users WHERE id = $1::uuid`, foundUserID).Scan(&displayName) //nolint:errcheck
+		pool.QueryRow(r.Context(), `SELECT display_name FROM name WHERE id = $1::uuid`, foundUserID).Scan(&displayName) //nolint:errcheck
 
 		writeJSON(w, http.StatusOK, map[string]any{
 			"success": true,
@@ -408,7 +408,7 @@ func HandleDeviceOptions(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challeng
 			return
 		}
 		setChallengeCookie(w, token, cfg.IsProd)
-		writeJSON(w, http.StatusOK, creation)
+		writeJSON(w, http.StatusOK, creation.Response)
 	}
 }
 
@@ -464,7 +464,7 @@ func HandleDeviceVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challenge
 			transports[i] = string(t)
 		}
 		if _, err := pool.Exec(r.Context(), `
-			INSERT INTO credentials (user_id, credential_id, public_key, sign_count, transports, device_name)
+			INSERT INTO credential (user_id, credential_id, public_key, sign_count, transports, device_name)
 			VALUES ($1::uuid, $2, $3, $4, $5, $6)
 		`, info.UserID, CredentialIDToBase64(cred.ID), cred.PublicKey,
 			cred.Authenticator.SignCount, transports, body.DeviceName,
@@ -491,7 +491,7 @@ func HandleListDevices(pool *pgxpool.Pool) http.HandlerFunc {
 
 		rows, err := pool.Query(r.Context(), `
 			SELECT id::text, device_name, transports, created_at
-			FROM credentials WHERE user_id = $1::uuid ORDER BY created_at ASC
+			FROM credential WHERE user_id = $1::uuid ORDER BY created_at ASC
 		`, info.UserID)
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "db error")
@@ -540,7 +540,7 @@ func HandleDeleteDevice(pool *pgxpool.Pool) http.HandlerFunc {
 
 		var count int
 		if err := pool.QueryRow(r.Context(),
-			`SELECT COUNT(*)::int FROM credentials WHERE user_id = $1::uuid`,
+			`SELECT COUNT(*)::int FROM credential WHERE user_id = $1::uuid`,
 			info.UserID,
 		).Scan(&count); err != nil || count <= 1 {
 			writeErr(w, http.StatusBadRequest, "Cannot remove the last passkey")
@@ -548,7 +548,7 @@ func HandleDeleteDevice(pool *pgxpool.Pool) http.HandlerFunc {
 		}
 
 		if _, err := pool.Exec(r.Context(),
-			`DELETE FROM credentials WHERE id = $1::uuid AND user_id = $2::uuid`,
+			`DELETE FROM credential WHERE id = $1::uuid AND user_id = $2::uuid`,
 			credID, info.UserID,
 		); err != nil {
 			writeErr(w, http.StatusInternalServerError, "db error")

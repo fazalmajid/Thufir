@@ -18,7 +18,7 @@ type UserInfo struct {
 func CreateSession(ctx context.Context, pool *pgxpool.Pool, userID string) (string, error) {
 	var id string
 	err := pool.QueryRow(ctx, `
-		INSERT INTO sessions (user_id, expires_at)
+		INSERT INTO session (user_id, expires_at)
 		VALUES ($1::uuid, NOW() + INTERVAL '90 days')
 		RETURNING id::text
 	`, userID).Scan(&id)
@@ -31,8 +31,8 @@ func ValidateSession(ctx context.Context, pool *pgxpool.Pool, sessionID string) 
 	var info UserInfo
 	err := pool.QueryRow(ctx, `
 		SELECT s.user_id::text, u.display_name
-		FROM sessions s
-		JOIN users u ON u.id = s.user_id
+		FROM session s
+		JOIN name u ON u.id = s.user_id
 		WHERE s.id = $1::uuid AND s.expires_at > NOW()
 	`, sessionID).Scan(&info.UserID, &info.DisplayName)
 	if err != nil {
@@ -46,6 +46,6 @@ func ValidateSession(ctx context.Context, pool *pgxpool.Pool, sessionID string) 
 
 // DeleteSession removes a session row.
 func DeleteSession(ctx context.Context, pool *pgxpool.Pool, sessionID string) error {
-	_, err := pool.Exec(ctx, `DELETE FROM sessions WHERE id = $1::uuid`, sessionID)
+	_, err := pool.Exec(ctx, `DELETE FROM session WHERE id = $1::uuid`, sessionID)
 	return err
 }

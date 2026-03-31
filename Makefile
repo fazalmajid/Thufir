@@ -2,7 +2,7 @@
 #
 # Targets:
 #   make          — full production build (frontend + embed + Go binary)
-#   make dev      — Vite dev server + Go API server running concurrently
+#   make dev      — build frontend once, then run Go server
 #   make clean    — remove build artefacts
 #   make run      — full build then execute the binary
 
@@ -17,8 +17,13 @@ all: build
 ## Full production build.
 build: frontend server
 
+## Install JS deps (skipped when node_modules is up to date).
+node_modules: package.json package-lock.json
+	npm install
+	@touch node_modules
+
 ## Build the frontend with Vite and copy assets into the Go embed path.
-frontend:
+frontend: node_modules
 	npm run build
 	cp -r dist/. $(EMBED_DIR)/
 

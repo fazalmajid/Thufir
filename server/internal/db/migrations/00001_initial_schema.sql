@@ -3,16 +3,16 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- Auth: Users (created first — referenced by data tables)
-CREATE TABLE users (
+CREATE TABLE name (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     display_name VARCHAR(100) NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Auth: WebAuthn credentials (one per device/passkey)
-CREATE TABLE credentials (
+CREATE TABLE credential (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES name(id) ON DELETE CASCADE,
     credential_id TEXT NOT NULL UNIQUE,   -- WebAuthn credential ID (base64url)
     public_key BYTEA NOT NULL,            -- COSE-encoded public key
     sign_count BIGINT NOT NULL DEFAULT 0, -- Replay-attack counter
@@ -22,17 +22,17 @@ CREATE TABLE credentials (
 );
 
 -- Auth: Sessions
-CREATE TABLE sessions (
+CREATE TABLE session (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES name(id) ON DELETE CASCADE,
     expires_at TIMESTAMPTZ NOT NULL,
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
 -- Areas: Top-level life areas (per user)
-CREATE TABLE areas (
+CREATE TABLE area (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES name(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     color VARCHAR(7),  -- Hex color code
     icon VARCHAR(50),  -- Icon identifier
@@ -43,12 +43,12 @@ CREATE TABLE areas (
 );
 
 -- Projects: Collections of tasks (per user)
-CREATE TABLE projects (
+CREATE TABLE project (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES name(id) ON DELETE CASCADE,
     name VARCHAR(255) NOT NULL,
     notes TEXT,
-    area_id UUID REFERENCES areas(id) ON DELETE SET NULL,
+    area_id UUID REFERENCES area(id) ON DELETE SET NULL,
     status VARCHAR(20) NOT NULL DEFAULT 'active', -- active, completed, archived
     deadline DATE,
     tags VARCHAR(50)[],
@@ -60,16 +60,16 @@ CREATE TABLE projects (
 );
 
 -- Tasks: Individual to-do items (per user)
-CREATE TABLE tasks (
+CREATE TABLE task (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    user_id UUID NOT NULL REFERENCES name(id) ON DELETE CASCADE,
     title VARCHAR(500) NOT NULL,
     notes TEXT,
 
     -- Hierarchy
-    project_id UUID REFERENCES projects(id) ON DELETE SET NULL,
-    area_id UUID REFERENCES areas(id) ON DELETE SET NULL,
-    parent_task_id UUID REFERENCES tasks(id) ON DELETE CASCADE,
+    project_id UUID REFERENCES project(id) ON DELETE SET NULL,
+    area_id UUID REFERENCES area(id) ON DELETE SET NULL,
+    parent_task_id UUID REFERENCES task(id) ON DELETE CASCADE,
 
     -- Status & timing
     status VARCHAR(20) NOT NULL DEFAULT 'inbox', -- inbox, today, upcoming, anytime, someday, completed
@@ -102,7 +102,7 @@ CREATE TABLE tasks (
 );
 
 -- Tags: Standalone tag definitions (global, not per-user)
-CREATE TABLE tags (
+CREATE TABLE tag (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
     name VARCHAR(50) NOT NULL UNIQUE,
     color VARCHAR(7),
@@ -113,25 +113,26 @@ CREATE TABLE tags (
 
 -- ── Indexes ────────────────────────────────────────────────────────────────────
 
-CREATE INDEX idx_credentials_user_id ON credentials(user_id);
-CREATE INDEX idx_sessions_user_id ON sessions(user_id);
-CREATE INDEX idx_sessions_expires_at ON sessions(expires_at);
+CREATE INDEX idx_credential_user_id ON credential(user_id);
+CREATE INDEX idx_session_user_id ON session(user_id);
+CREATE INDEX idx_session_expires_at ON session(expires_at);
 
-CREATE INDEX idx_areas_user_id ON areas(user_id);
-CREATE INDEX idx_projects_user_id ON projects(user_id);
-CREATE INDEX idx_projects_area_id ON projects(area_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_tasks_user_id ON tasks(user_id);
-CREATE INDEX idx_tasks_project_id ON tasks(project_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_tasks_area_id ON tasks(area_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_tasks_parent_task_id ON tasks(parent_task_id) WHERE deleted_at IS NULL;
-CREATE INDEX idx_tasks_status ON tasks(user_id, status) WHERE deleted_at IS NULL;
-CREATE INDEX idx_tasks_scheduled_date ON tasks(user_id, scheduled_date) WHERE deleted_at IS NULL;
-CREATE INDEX idx_tasks_updated_at ON tasks(user_id, updated_at, id);
-CREATE INDEX idx_projects_updated_at ON projects(user_id, updated_at, id);
-CREATE INDEX idx_areas_updated_at ON areas(user_id, updated_at, id);
+CREATE INDEX idx_area_user_id ON area(user_id);
+CREATE INDEX idx_project_user_id ON project(user_id);
+CREATE INDEX idx_project_area_id ON project(area_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_task_user_id ON task(user_id);
+CREATE INDEX idx_task_project_id ON task(project_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_task_area_id ON task(area_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_task_parent_task_id ON task(parent_task_id) WHERE deleted_at IS NULL;
+CREATE INDEX idx_task_status ON task(user_id, status) WHERE deleted_at IS NULL;
+CREATE INDEX idx_task_scheduled_date ON task(user_id, scheduled_date) WHERE deleted_at IS NULL;
+CREATE INDEX idx_task_updated_at ON task(user_id, updated_at, id);
+CREATE INDEX idx_project_updated_at ON project(user_id, updated_at, id);
+CREATE INDEX idx_area_updated_at ON area(user_id, updated_at, id);
 
 -- ── Updated_at triggers ────────────────────────────────────────────────────────
 
+-- +goose StatementBegin
 CREATE OR REPLACE FUNCTION update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
@@ -139,24 +140,25 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+-- +goose StatementEnd
 
-CREATE TRIGGER update_areas_updated_at    BEFORE UPDATE ON areas    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_projects_updated_at BEFORE UPDATE ON projects FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tasks_updated_at    BEFORE UPDATE ON tasks    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
-CREATE TRIGGER update_tags_updated_at     BEFORE UPDATE ON tags     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_area_updated_at    BEFORE UPDATE ON area    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_project_updated_at BEFORE UPDATE ON project FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_task_updated_at    BEFORE UPDATE ON task    FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
+CREATE TRIGGER update_tag_updated_at     BEFORE UPDATE ON tag     FOR EACH ROW EXECUTE FUNCTION update_updated_at_column();
 
 -- +goose Down
 
-DROP TRIGGER IF EXISTS update_tags_updated_at     ON tags;
-DROP TRIGGER IF EXISTS update_tasks_updated_at    ON tasks;
-DROP TRIGGER IF EXISTS update_projects_updated_at ON projects;
-DROP TRIGGER IF EXISTS update_areas_updated_at    ON areas;
+DROP TRIGGER IF EXISTS update_tag_updated_at     ON tag;
+DROP TRIGGER IF EXISTS update_task_updated_at    ON task;
+DROP TRIGGER IF EXISTS update_project_updated_at ON project;
+DROP TRIGGER IF EXISTS update_area_updated_at    ON area;
 DROP FUNCTION IF EXISTS update_updated_at_column();
 
-DROP TABLE IF EXISTS tags;
-DROP TABLE IF EXISTS tasks;
-DROP TABLE IF EXISTS projects;
-DROP TABLE IF EXISTS areas;
-DROP TABLE IF EXISTS sessions;
-DROP TABLE IF EXISTS credentials;
-DROP TABLE IF EXISTS users;
+DROP TABLE IF EXISTS tag;
+DROP TABLE IF EXISTS task;
+DROP TABLE IF EXISTS project;
+DROP TABLE IF EXISTS area;
+DROP TABLE IF EXISTS session;
+DROP TABLE IF EXISTS credential;
+DROP TABLE IF EXISTS name;

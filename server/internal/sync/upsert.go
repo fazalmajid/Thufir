@@ -48,7 +48,7 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 	// The updated_at is always set to NOW() — server clock is authoritative.
 	// deleted_at: set to NOW() if _deleted, else NULL (allows undo-delete).
 	_, err := tx.Exec(ctx, `
-		INSERT INTO tasks (
+		INSERT INTO task (
 			id, user_id, title, notes, project_id, area_id, parent_task_id,
 			status, is_completed, completed_at, start_date, deadline,
 			scheduled_date, start_time, reminder_time, is_flagged, priority,
@@ -80,7 +80,7 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 			sort_order     = EXCLUDED.sort_order,
 			updated_at     = NOW(),
 			deleted_at     = EXCLUDED.deleted_at
-		WHERE tasks.user_id = $2::uuid
+		WHERE task.user_id = $2::uuid
 	`,
 		d.ID, userID, d.Title, d.Notes, d.ProjectID, d.AreaID, d.ParentTaskID,
 		d.Status, d.IsCompleted, d.CompletedAt, d.StartDate, d.Deadline,
@@ -123,7 +123,7 @@ func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMe
 	}
 
 	_, err := tx.Exec(ctx, `
-		INSERT INTO projects (
+		INSERT INTO project (
 			id, user_id, name, notes, area_id, status, deadline,
 			tags, sort_order, created_at, updated_at, completed_at, deleted_at
 		) VALUES (
@@ -142,7 +142,7 @@ func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMe
 			completed_at = EXCLUDED.completed_at,
 			updated_at   = NOW(),
 			deleted_at   = EXCLUDED.deleted_at
-		WHERE projects.user_id = $2::uuid
+		WHERE project.user_id = $2::uuid
 	`,
 		d.ID, userID, d.Name, d.Notes, d.AreaID, d.Status, d.Deadline,
 		d.Tags, d.SortOrder, d.CreatedAt, d.CompletedAt,
@@ -173,7 +173,7 @@ func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 	}
 
 	_, err := tx.Exec(ctx, `
-		INSERT INTO areas (
+		INSERT INTO area (
 			id, user_id, name, color, icon, sort_order, created_at, updated_at, deleted_at
 		) VALUES (
 			$1::uuid, $2::uuid, $3, $4, $5, $6, $7::timestamptz, NOW(),
@@ -186,7 +186,7 @@ func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 			sort_order = EXCLUDED.sort_order,
 			updated_at = NOW(),
 			deleted_at = EXCLUDED.deleted_at
-		WHERE areas.user_id = $2::uuid
+		WHERE area.user_id = $2::uuid
 	`,
 		d.ID, userID, d.Name, d.Color, d.Icon, d.SortOrder, d.CreatedAt,
 	)

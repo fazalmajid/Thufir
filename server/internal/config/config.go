@@ -13,7 +13,7 @@ type Config struct {
 }
 
 func FromEnv() Config {
-	rpOrigin := getEnv("RP_ORIGIN", "http://localhost:3001")
+	rpOrigin := getEnv("RP_ORIGIN", "https://thufir.majid.org")
 	origins := []string{
 		"http://localhost:5173",
 		"http://localhost:4173",
@@ -33,7 +33,7 @@ func FromEnv() Config {
 		DatabaseURL:    getEnv("DATABASE_URL", ""),
 		Port:           getEnv("PORT", "3001"),
 		RPName:         "Thufir",
-		RPID:           getEnv("RP_ID", "localhost"),
+		RPID:           getEnv("RP_ID", "thufir.majid.org"),
 		RPOrigin:       rpOrigin,
 		IsProd:         getEnv("GO_ENV", "") == "production",
 		AllowedOrigins: unique,

@@ -7,5 +7,5 @@ import "embed"
 // local testing) before `go build` runs — it is never committed to source
 // control except for the placeholder .gitkeep.
 //
-//go:embed static
+//go:embed all:static
 var staticFiles embed.FS

@@ -17,6 +17,7 @@
 	let isMobileMenuOpen = $state(false);
 	let authReady = $state(false);
 	let isAuthenticated = $state(false);
+	let initError = $state<string | null>(null);
 
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
@@ -66,12 +67,16 @@
 		isAuthenticated = true;
 		authReady = true;
 
-		// Initialise RxDB and subscribe to reactive queries.
-		const db = await getDB();
-		await Promise.all([taskStore.init(), areaStore.init(), projectStore.init()]);
+		try {
+			// Initialise RxDB and subscribe to reactive queries.
+			const db = await getDB();
+			await Promise.all([taskStore.init(), areaStore.init(), projectStore.init()]);
 
-		// Start background sync with the Go server.
-		startReplication(db);
+			// Start background sync with the Go server.
+			await startReplication(db);
+		} catch (e) {
+			initError = e instanceof Error ? e.message : String(e);
+		}
 	});
 </script>
 
@@ -82,6 +87,11 @@
 		<Sidebar isOpen={isMobileMenuOpen} onClose={closeMobileMenu} />
 		<div class="flex-1 flex flex-col overflow-hidden">
 			<Header onMenuToggle={toggleMobileMenu} />
+			{#if initError}
+				<div class="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-700">
+					DB init failed: {initError}
+				</div>
+			{/if}
 			<main class="flex-1 overflow-y-auto bg-gray-50">
 				{@render children()}
 			</main>

@@ -106,6 +106,17 @@ def main():
     try:
         with pg.cursor() as cur:
             # ------------------------------------------------------------------
+            # 0. Resolve user_id (all data tables require it)
+            # ------------------------------------------------------------------
+            cur.execute('SELECT id FROM name LIMIT 1')
+            row = cur.fetchone()
+            if row is None:
+                print("ERROR: No user found in the database. Complete setup first.")
+                sys.exit(1)
+            user_id = row[0]
+            print(f"Importing as user: {user_id}")
+
+            # ------------------------------------------------------------------
             # 1. Areas
             # ------------------------------------------------------------------
             print("\n--- Importing areas ---")
@@ -118,10 +129,10 @@ def main():
                 area_map[row["uuid"]] = new_id
                 cur.execute(
                     """
-                    INSERT INTO areas (id, name, sort_order)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO area (id, user_id, name, sort_order)
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (new_id, row["title"] or "Unnamed Area", row["index"] or i),
+                    (new_id, user_id, row["title"] or "Unnamed Area", row["index"] or i),
                 )
             print(f"  Inserted {len(areas)} areas")
 
@@ -138,7 +149,7 @@ def main():
                 # INSERT OR IGNORE equivalent: use ON CONFLICT
                 cur.execute(
                     """
-                    INSERT INTO tags (name)
+                    INSERT INTO tag (name)
                     VALUES (%s)
                     ON CONFLICT (name) DO NOTHING
                     """,
@@ -177,12 +188,13 @@ def main():
 
                 cur.execute(
                     """
-                    INSERT INTO projects (id, name, notes, area_id, status, sort_order,
+                    INSERT INTO project (id, user_id, name, notes, area_id, status, sort_order,
                                          completed_at, deleted_at)
-                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
+                    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         new_id,
+                        user_id,
                         row["title"] or "Unnamed Project",
                         row["notes"],
                         area_id,
@@ -272,8 +284,8 @@ def main():
 
                 cur.execute(
                     """
-                    INSERT INTO tasks (
-                        id, title, notes,
+                    INSERT INTO task (
+                        id, user_id, title, notes,
                         project_id, area_id,
                         status, is_completed, completed_at,
                         start_date, deadline,
@@ -281,10 +293,11 @@ def main():
                         tags,
                         sort_order,
                         created_at, updated_at, deleted_at
-                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
+                    ) VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                     """,
                     (
                         new_id,
+                        user_id,
                         row["title"] or "(no title)",
                         notes,
                         project_id,
@@ -314,12 +327,12 @@ def main():
             print("\n--- Updating tag usage counts ---")
             cur.execute(
                 """
-                UPDATE tags t
+                UPDATE tag t
                 SET usage_count = (
                     SELECT COUNT(*)
-                    FROM tasks
-                    WHERE t.name = ANY(tasks.tags)
-                      AND tasks.deleted_at IS NULL
+                    FROM task
+                    WHERE t.name = ANY(task.tags)
+                      AND task.deleted_at IS NULL
                 )
                 """
             )
