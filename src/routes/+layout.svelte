@@ -1,6 +1,5 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
-	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { taskStore } from '$lib/stores/tasks.svelte';
@@ -18,6 +17,7 @@
 	let authReady = $state(false);
 	let isAuthenticated = $state(false);
 	let initError = $state<string | null>(null);
+	let dbInitialized = $state(false);
 
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
@@ -46,37 +46,40 @@
 		};
 	});
 
-	onMount(async () => {
+	$effect(() => {
 		if ($page.url.pathname === '/login') {
 			authReady = true;
 			return;
 		}
+		if (isAuthenticated) return;
 
-		// Check authentication (auth is still REST-based).
-		try {
-			const res = await fetch('/api/auth/me', { credentials: 'include' });
-			if (!res.ok) {
+		// Check authentication whenever we navigate to a non-login page.
+		(async () => {
+			try {
+				const res = await fetch('/api/auth/me', { credentials: 'include' });
+				if (!res.ok) {
+					goto('/login');
+					return;
+				}
+			} catch {
 				goto('/login');
 				return;
 			}
-		} catch {
-			goto('/login');
-			return;
-		}
 
-		isAuthenticated = true;
-		authReady = true;
+			isAuthenticated = true;
+			authReady = true;
 
-		try {
-			// Initialise RxDB and subscribe to reactive queries.
-			const db = await getDB();
-			await Promise.all([taskStore.init(), areaStore.init(), projectStore.init()]);
-
-			// Start background sync with the Go server.
-			await startReplication(db);
-		} catch (e) {
-			initError = e instanceof Error ? e.message : String(e);
-		}
+			if (!dbInitialized) {
+				dbInitialized = true;
+				try {
+					const db = await getDB();
+					await Promise.all([taskStore.init(), areaStore.init(), projectStore.init()]);
+					await startReplication(db);
+				} catch (e) {
+					initError = e instanceof Error ? e.message : String(e);
+				}
+			}
+		})();
 	});
 </script>
 
