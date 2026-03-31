@@ -34,7 +34,7 @@
 
 			return false;
 		});
-		matches.sort((a: Task, b: Task) => Number(a.completed) - Number(b.completed));
+		matches.sort((a: Task, b: Task) => Number(a.is_completed) - Number(b.is_completed));
 		return matches;
 	});
 

@@ -14,13 +14,15 @@
 
 	let { task, draggable = false, showContext = false }: Props = $props();
 
-	let contextLabel = $derived.by(() => {
-		if (!showContext) return null;
+	let contextParts = $derived.by(() => {
+		if (!showContext) return [];
 		const project = task.project_id ? projectStore.projects.find(p => p.id === task.project_id) : null;
 		const areaId = project?.area_id ?? task.area_id;
 		const area = areaId ? areaStore.areas.find(a => a.id === areaId) : null;
-		const parts = [area?.name, project?.name].filter(Boolean);
-		return parts.length ? parts.join(' › ') : null;
+		const parts: { name: string; href: string }[] = [];
+		if (area) parts.push({ name: area.name, href: `/areas/${area.id}` });
+		if (project) parts.push({ name: project.name, href: `/projects/${project.id}` });
+		return parts;
 	});
 	let notesExpanded = $state(false);
 	let isEditing = $state(false);
@@ -443,8 +445,17 @@
 				</div>
 			{/if}
 
-			{#if contextLabel}
-				<p class="text-xs text-gray-400 mt-0.5 ml-5">{contextLabel}</p>
+			{#if contextParts.length > 0}
+				<p class="text-xs mt-0.5 ml-5">
+					{#each contextParts as part, i}
+						{#if i > 0}<span class="text-blue-300"> › </span>{/if}
+						<a
+							href={part.href}
+							class="text-blue-400 hover:text-blue-600 hover:underline"
+							onclick={(e) => e.stopPropagation()}
+						>{part.name}</a>
+					{/each}
+				</p>
 			{/if}
 
 			{#if task.tags && task.tags.length > 0}
