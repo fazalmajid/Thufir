@@ -5,6 +5,7 @@
 	import { areaStore } from '$lib/stores/areas.svelte';
 	import { marked } from 'marked';
 	import { tick } from 'svelte';
+	import DateInput from '$lib/components/ui/DateInput.svelte';
 
 	interface Props {
 		task: Task;
@@ -358,10 +359,9 @@
 
 						<div class="flex flex-col gap-1">
 							<label class="text-xs text-gray-600 font-medium">Due Date</label>
-							<input
+							<DateInput
 								bind:value={editedDeadline}
 								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-								type="date"
 							/>
 						</div>
 					</div>
@@ -369,11 +369,9 @@
 					<div class="flex flex-col gap-1">
 						<label class="text-xs text-gray-600 font-medium">Reminder</label>
 						<div class="grid grid-cols-2 gap-2">
-							<input
+							<DateInput
 								bind:value={editedReminderDate}
 								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-								type="date"
-								placeholder="Date"
 							/>
 							<input
 								bind:value={editedReminderTime}
