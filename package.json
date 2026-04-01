@@ -27,7 +27,7 @@
     "workbox-window": "^7.0.0"
   },
   "dependencies": {
-    "rxdb": "^15.0.0",
+    "rxdb": "^17.0.0",
     "@simplewebauthn/browser": "^13.0.0",
     "bits-ui": "^1.0.0",
     "date-fns": "^3.0.0",
