@@ -64,6 +64,14 @@ func main() {
 		r.Delete("/devices/{id}", auth.HandleDeleteDevice(pool))
 	})
 
+	// ── task quick-add (session required) ─────────────────────────────────────
+	// Bookmarklet fires from arbitrary origins, so we allow any Origin here
+	// while still requiring a valid session cookie.
+	r.With(bookmarkletCORS).With(mw.RequireAuth(pool)).Post("/api/tasks/quick-add", sync.HandleQuickAdd(pool))
+	r.With(bookmarkletCORS).Options("/api/tasks/quick-add", func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNoContent)
+	})
+
 	// ── RxDB replication routes (session required) ────────────────────────────
 	// URL segments (and RxDB collection names) are plural; SQL table names are singular.
 	type collDef struct{ url, table string }
@@ -87,6 +95,22 @@ func main() {
 	if err := http.ListenAndServe(":"+cfg.Port, r); err != nil {
 		log.Fatal(err)
 	}
+}
+
+// bookmarkletCORS allows any origin with credentials for the quick-add endpoint.
+// The session cookie (SameSite=None; Secure) provides the actual auth guard.
+func bookmarkletCORS(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		origin := r.Header.Get("Origin")
+		if origin != "" {
+			w.Header().Set("Access-Control-Allow-Origin", origin)
+			w.Header().Set("Access-Control-Allow-Credentials", "true")
+			w.Header().Set("Access-Control-Allow-Methods", "POST, OPTIONS")
+			w.Header().Set("Access-Control-Allow-Headers", "Content-Type")
+			w.Header().Set("Vary", "Origin")
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 // corsMiddleware sets permissive CORS headers for allowed origins.

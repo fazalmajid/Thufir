@@ -2,6 +2,16 @@
 	import { onMount } from 'svelte';
 	import { startRegistration } from '@simplewebauthn/browser';
 
+	const ORIGIN = 'https://thufir.majid.org';
+
+	const bookmarkletCode = `(function(){
+var t=encodeURIComponent(document.title);
+var u=encodeURIComponent(location.href);
+window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
+})();`;
+
+	const bookmarkletHref = 'javascript:' + encodeURIComponent(bookmarkletCode);
+
 	
 
 	interface Device {
@@ -155,5 +165,27 @@
 		{#if success}
 			<p class="text-sm text-green-600">{success}</p>
 		{/if}
+	</section>
+
+	<section class="space-y-4">
+		<h2 class="text-lg font-semibold text-gray-800">Bookmarklet</h2>
+		<p class="text-sm text-gray-600">
+			Drag the button below to your browser toolbar. Clicking it on any page will save
+			that page's title and URL as a new task in your Thufir inbox.
+		</p>
+		<div class="flex items-center gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+			<a
+				href={bookmarkletHref}
+				onclick={(e) => e.preventDefault()}
+				draggable="true"
+				class="inline-flex items-center gap-2 px-4 py-2 bg-blue-600 text-white text-sm font-medium rounded-lg cursor-grab active:cursor-grabbing select-none hover:bg-blue-700 transition-colors"
+			>
+				<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+				</svg>
+				Add to Thufir
+			</a>
+			<p class="text-xs text-gray-500">Drag to your bookmarks toolbar</p>
+		</div>
 	</section>
 </div>

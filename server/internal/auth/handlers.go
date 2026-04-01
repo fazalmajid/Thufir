@@ -26,6 +26,12 @@ func writeErr(w http.ResponseWriter, status int, msg string) {
 }
 
 func setSessionCookie(w http.ResponseWriter, sessionID string, isProd bool) {
+	sameSite := http.SameSiteLaxMode
+	if isProd {
+		// SameSite=None is required for cross-origin requests (e.g. the bookmarklet)
+		// to include the cookie. Requires Secure=true (HTTPS).
+		sameSite = http.SameSiteNoneMode
+	}
 	http.SetCookie(w, &http.Cookie{
 		Name:     "session",
 		Value:    sessionID,
@@ -33,7 +39,7 @@ func setSessionCookie(w http.ResponseWriter, sessionID string, isProd bool) {
 		MaxAge:   90 * 24 * 60 * 60,
 		HttpOnly: true,
 		Secure:   isProd,
-		SameSite: http.SameSiteLaxMode,
+		SameSite: sameSite,
 	})
 }
 
