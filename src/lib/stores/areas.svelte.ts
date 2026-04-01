@@ -1,4 +1,4 @@
-import { areaAPI } from '$lib/services/api';
+import { getDB } from '$lib/db/index';
 import type { Area } from '$lib/types/area';
 
 class AreaStore {
@@ -10,28 +10,38 @@ class AreaStore {
 		return this.areas.filter((a) => !a.deleted_at).sort((a, b) => a.sort_order - b.sort_order);
 	}
 
-	async load() {
+	async init() {
 		this.loading = true;
-		this.error = null;
-
 		try {
-			this.areas = await areaAPI.list();
+			const db = await getDB();
+			db.areas
+				.find({ selector: {}, sort: [{ sort_order: 'asc' }] })
+				.$.subscribe((docs) => {
+					this.areas = docs.map((d) => d.toJSON() as Area);
+					this.loading = false;
+				});
 		} catch (err) {
-			this.error = err instanceof Error ? err.message : 'Failed to load areas';
-			console.error('Failed to load areas:', err);
-		} finally {
+			this.error = err instanceof Error ? err.message : 'Failed to init areas';
 			this.loading = false;
 		}
 	}
 
 	async create(data: Partial<Area>) {
+		const db = await getDB();
+		const now = new Date().toISOString();
+		const doc = {
+			id: crypto.randomUUID(),
+			name: data.name ?? 'New Area',
+			sort_order: 0,
+			created_at: now,
+			updated_at: now,
+			...data
+		};
 		try {
-			const newArea = await areaAPI.create(data);
-			this.areas = [...this.areas, newArea];
-			return newArea;
+			await db.areas.insert(doc);
+			return doc as Area;
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to create area';
-			console.error('Failed to create area:', err);
 			throw err;
 		}
 	}

@@ -16,7 +16,7 @@
 		const query = searchQuery.toLowerCase().trim();
 		const allTasks = taskStore.tasks;
 
-		return allTasks.filter((task: Task) => {
+		const matches = allTasks.filter((task: Task) => {
 			// Search in title
 			if (task.title.toLowerCase().includes(query)) {
 				return true;
@@ -34,6 +34,8 @@
 
 			return false;
 		});
+		matches.sort((a: Task, b: Task) => Number(a.is_completed) - Number(b.is_completed));
+		return matches;
 	});
 
 	let resultCount = $derived(searchResults.length);

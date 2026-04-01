@@ -13,3 +13,5 @@ things.db
 __pycache__
 .claude
 *~
+dist
+thufir

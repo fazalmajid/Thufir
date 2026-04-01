@@ -5,6 +5,7 @@
 	import { areaStore } from '$lib/stores/areas.svelte';
 	import { marked } from 'marked';
 	import { tick } from 'svelte';
+	import DateInput from '$lib/components/ui/DateInput.svelte';
 
 	interface Props {
 		task: Task;
@@ -14,13 +15,15 @@
 
 	let { task, draggable = false, showContext = false }: Props = $props();
 
-	let contextLabel = $derived.by(() => {
-		if (!showContext) return null;
+	let contextParts = $derived.by(() => {
+		if (!showContext) return [];
 		const project = task.project_id ? projectStore.projects.find(p => p.id === task.project_id) : null;
 		const areaId = project?.area_id ?? task.area_id;
 		const area = areaId ? areaStore.areas.find(a => a.id === areaId) : null;
-		const parts = [area?.name, project?.name].filter(Boolean);
-		return parts.length ? parts.join(' › ') : null;
+		const parts: { name: string; href: string }[] = [];
+		if (area) parts.push({ name: area.name, href: `/areas/${area.id}` });
+		if (project) parts.push({ name: project.name, href: `/projects/${project.id}` });
+		return parts;
 	});
 	let notesExpanded = $state(false);
 	let isEditing = $state(false);
@@ -356,10 +359,9 @@
 
 						<div class="flex flex-col gap-1">
 							<label class="text-xs text-gray-600 font-medium">Due Date</label>
-							<input
+							<DateInput
 								bind:value={editedDeadline}
 								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-								type="date"
 							/>
 						</div>
 					</div>
@@ -367,11 +369,9 @@
 					<div class="flex flex-col gap-1">
 						<label class="text-xs text-gray-600 font-medium">Reminder</label>
 						<div class="grid grid-cols-2 gap-2">
-							<input
+							<DateInput
 								bind:value={editedReminderDate}
 								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
-								type="date"
-								placeholder="Date"
 							/>
 							<input
 								bind:value={editedReminderTime}
@@ -443,8 +443,17 @@
 				</div>
 			{/if}
 
-			{#if contextLabel}
-				<p class="text-xs text-gray-400 mt-0.5 ml-5">{contextLabel}</p>
+			{#if contextParts.length > 0}
+				<p class="text-xs mt-0.5 ml-5">
+					{#each contextParts as part, i}
+						{#if i > 0}<span class="text-blue-300"> › </span>{/if}
+						<a
+							href={part.href}
+							class="text-blue-400 hover:text-blue-600 hover:underline"
+							onclick={(e) => e.stopPropagation()}
+						>{part.name}</a>
+					{/each}
+				</p>
 			{/if}
 
 			{#if task.tags && task.tags.length > 0}
