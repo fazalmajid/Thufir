@@ -28,7 +28,7 @@ type taskDoc struct {
 	Tags          []string `json:"tags"`
 	SortOrder     int      `json:"sort_order"`
 	CreatedAt     string   `json:"created_at"`
-	Deleted       bool     `json:"_deleted"`
+	DeletedAt     *string  `json:"deleted_at"`
 }
 
 func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) error {
@@ -40,13 +40,8 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 		d.Tags = []string{}
 	}
 
-	deletedAt := "NULL"
-	if d.Deleted {
-		deletedAt = "NOW()"
-	}
-
 	// The updated_at is always set to NOW() — server clock is authoritative.
-	// deleted_at: set to NOW() if _deleted, else NULL (allows undo-delete).
+	// deleted_at is client-controlled (soft delete / restore); pass it through as-is.
 	_, err := tx.Exec(ctx, `
 		INSERT INTO task (
 			id, user_id, title, notes, project_id, area_id, parent_task_id,
@@ -57,8 +52,7 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 			$1::uuid, $2::uuid, $3, $4, $5::uuid, $6::uuid, $7::uuid,
 			$8, $9, $10::timestamptz, $11::date, $12::date,
 			$13::date, $14::time, $15::timestamptz, $16, $17,
-			$18, $19, $20::timestamptz, NOW(),
-			`+deletedAt+`
+			$18, $19, $20::timestamptz, NOW(), $21::timestamptz
 		)
 		ON CONFLICT (id) DO UPDATE SET
 			title          = EXCLUDED.title,
@@ -85,7 +79,7 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 		d.ID, userID, d.Title, d.Notes, d.ProjectID, d.AreaID, d.ParentTaskID,
 		d.Status, d.IsCompleted, d.CompletedAt, d.StartDate, d.Deadline,
 		d.ScheduledDate, d.StartTime, d.ReminderTime, d.IsFlagged, d.Priority,
-		d.Tags, d.SortOrder, d.CreatedAt,
+		d.Tags, d.SortOrder, d.CreatedAt, d.DeletedAt,
 	)
 	return err
 }
@@ -102,7 +96,7 @@ type projectDoc struct {
 	SortOrder   int      `json:"sort_order"`
 	CreatedAt   string   `json:"created_at"`
 	CompletedAt *string  `json:"completed_at"`
-	Deleted     bool     `json:"_deleted"`
+	DeletedAt   *string  `json:"deleted_at"`
 }
 
 func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) error {
@@ -117,19 +111,13 @@ func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMe
 		d.Status = "active"
 	}
 
-	deletedAt := "NULL"
-	if d.Deleted {
-		deletedAt = "NOW()"
-	}
-
 	_, err := tx.Exec(ctx, `
 		INSERT INTO project (
 			id, user_id, name, notes, area_id, status, deadline,
 			tags, sort_order, created_at, updated_at, completed_at, deleted_at
 		) VALUES (
 			$1::uuid, $2::uuid, $3, $4, $5::uuid, $6, $7::date,
-			$8, $9, $10::timestamptz, NOW(), $11::timestamptz,
-			`+deletedAt+`
+			$8, $9, $10::timestamptz, NOW(), $11::timestamptz, $12::timestamptz
 		)
 		ON CONFLICT (id) DO UPDATE SET
 			name         = EXCLUDED.name,
@@ -145,7 +133,7 @@ func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMe
 		WHERE project.user_id = $2::uuid
 	`,
 		d.ID, userID, d.Name, d.Notes, d.AreaID, d.Status, d.Deadline,
-		d.Tags, d.SortOrder, d.CreatedAt, d.CompletedAt,
+		d.Tags, d.SortOrder, d.CreatedAt, d.CompletedAt, d.DeletedAt,
 	)
 	return err
 }
@@ -158,7 +146,7 @@ type areaDoc struct {
 	Icon      *string `json:"icon"`
 	SortOrder int     `json:"sort_order"`
 	CreatedAt string  `json:"created_at"`
-	Deleted   bool    `json:"_deleted"`
+	DeletedAt *string `json:"deleted_at"`
 }
 
 func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) error {
@@ -167,17 +155,11 @@ func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 		return err
 	}
 
-	deletedAt := "NULL"
-	if d.Deleted {
-		deletedAt = "NOW()"
-	}
-
 	_, err := tx.Exec(ctx, `
 		INSERT INTO area (
 			id, user_id, name, color, icon, sort_order, created_at, updated_at, deleted_at
 		) VALUES (
-			$1::uuid, $2::uuid, $3, $4, $5, $6, $7::timestamptz, NOW(),
-			`+deletedAt+`
+			$1::uuid, $2::uuid, $3, $4, $5, $6, $7::timestamptz, NOW(), $8::timestamptz
 		)
 		ON CONFLICT (id) DO UPDATE SET
 			name       = EXCLUDED.name,
@@ -188,7 +170,7 @@ func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 			deleted_at = EXCLUDED.deleted_at
 		WHERE area.user_id = $2::uuid
 	`,
-		d.ID, userID, d.Name, d.Color, d.Icon, d.SortOrder, d.CreatedAt,
+		d.ID, userID, d.Name, d.Color, d.Icon, d.SortOrder, d.CreatedAt, d.DeletedAt,
 	)
 	return err
 }

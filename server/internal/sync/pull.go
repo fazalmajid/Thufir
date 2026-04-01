@@ -40,7 +40,7 @@ func HandlePull(table string, pool *pgxpool.Pool) http.HandlerFunc {
 			// First sync: return everything ordered by (updated_at, id).
 			rows, err := pool.Query(r.Context(), `
 				SELECT
-					(to_jsonb(t) - 'user_id' || jsonb_build_object('_deleted', t.deleted_at IS NOT NULL))::text,
+					(to_jsonb(t) - 'user_id')::text,
 					t.updated_at,
 					t.id::text
 				FROM `+table+` t
@@ -66,7 +66,7 @@ func HandlePull(table string, pool *pgxpool.Pool) http.HandlerFunc {
 			// Subsequent sync: return only rows newer than the checkpoint.
 			rows, err := pool.Query(r.Context(), `
 				SELECT
-					(to_jsonb(t) - 'user_id' || jsonb_build_object('_deleted', t.deleted_at IS NOT NULL))::text,
+					(to_jsonb(t) - 'user_id')::text,
 					t.updated_at,
 					t.id::text
 				FROM `+table+` t
