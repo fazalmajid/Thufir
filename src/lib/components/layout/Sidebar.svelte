@@ -83,6 +83,14 @@
 		return $page.url.pathname === path;
 	}
 
+	function activeClass(path: string) {
+		return isActive(path) ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700 font-medium' : '';
+	}
+
+	function activeClassNoWeight(path: string) {
+		return isActive(path) ? 'bg-blue-50 dark:bg-blue-900/30 text-blue-700' : '';
+	}
+
 	// Close menu when clicking a link on mobile
 	function handleLinkClick() {
 		if (onClose) {
@@ -122,12 +130,9 @@
 	function handleSearch(e: Event) {
 		e.preventDefault();
 		if (searchQuery.trim()) {
-			// Navigate to search page with query
 			window.location.href = `/search?q=${encodeURIComponent(searchQuery.trim())}`;
 		}
 	}
-
-	
 
 	async function handleLogout() {
 		await fetch(`/api/auth/logout`, { method: 'POST', credentials: 'include' });
@@ -149,21 +154,21 @@
 
 <!-- Sidebar -->
 <aside
-	class="w-64 bg-white border-r border-gray-200 flex flex-col h-screen
+	class="w-64 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col h-screen
 		fixed md:static inset-y-0 left-0 z-50
 		transform transition-transform duration-300 ease-in-out
 		{isOpen ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}"
 >
-	<div class="p-4 border-b border-gray-200">
-		<h1 class="text-xl font-bold text-gray-900">Thufir</h1>
-		<p class="text-xs text-gray-500 mt-1">Local-first tasks</p>
+	<div class="p-4 border-b border-gray-200 dark:border-gray-700">
+		<h1 class="text-xl font-bold text-gray-900 dark:text-gray-100">Thufir</h1>
+		<p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Local-first tasks</p>
 	</div>
 
 	<!-- Search box -->
 	<div class="px-4 pt-4 pb-2">
 		<form onsubmit={handleSearch} class="relative">
 			<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-				<svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+				<svg class="w-4 h-4 text-gray-400 dark:text-gray-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
 				</svg>
 			</div>
@@ -171,7 +176,7 @@
 				type="text"
 				bind:value={searchQuery}
 				placeholder="Search tasks..."
-				class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full pl-10 pr-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100 placeholder-gray-400 dark:placeholder-gray-500"
 			/>
 		</form>
 	</div>
@@ -183,10 +188,7 @@
 				<a
 					href="/inbox"
 					onclick={handleLinkClick}
-					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-					class:bg-blue-50={isActive('/inbox')}
-					class:text-blue-700={isActive('/inbox')}
-					class:font-medium={isActive('/inbox')}
+					class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/inbox')}"
 				>
 					<div class="flex items-center gap-2">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -195,7 +197,7 @@
 						<span>Inbox</span>
 					</div>
 					{#if inboxCount > 0}
-						<span class="text-xs font-semibold text-gray-500">{inboxCount}</span>
+						<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{inboxCount}</span>
 					{/if}
 				</a>
 			</SidebarDropZone>
@@ -204,10 +206,7 @@
 				<a
 					href="/today"
 					onclick={handleLinkClick}
-					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-					class:bg-blue-50={isActive('/today')}
-					class:text-blue-700={isActive('/today')}
-					class:font-medium={isActive('/today')}
+					class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/today')}"
 				>
 					<div class="flex items-center gap-2">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -216,7 +215,7 @@
 						<span>Today</span>
 					</div>
 					{#if todayCount > 0}
-						<span class="text-xs font-semibold text-gray-500">{todayCount}</span>
+						<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{todayCount}</span>
 					{/if}
 				</a>
 			</SidebarDropZone>
@@ -225,10 +224,7 @@
 				<a
 					href="/upcoming"
 					onclick={handleLinkClick}
-					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-					class:bg-blue-50={isActive('/upcoming')}
-					class:text-blue-700={isActive('/upcoming')}
-					class:font-medium={isActive('/upcoming')}
+					class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/upcoming')}"
 				>
 					<div class="flex items-center gap-2">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -243,10 +239,7 @@
 				<a
 					href="/anytime"
 					onclick={handleLinkClick}
-					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-					class:bg-blue-50={isActive('/anytime')}
-					class:text-blue-700={isActive('/anytime')}
-					class:font-medium={isActive('/anytime')}
+					class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/anytime')}"
 				>
 					<div class="flex items-center gap-2">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -261,10 +254,7 @@
 				<a
 					href="/someday"
 					onclick={handleLinkClick}
-					class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-					class:bg-blue-50={isActive('/someday')}
-					class:text-blue-700={isActive('/someday')}
-					class:font-medium={isActive('/someday')}
+					class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/someday')}"
 				>
 					<div class="flex items-center gap-2">
 						<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -279,7 +269,7 @@
 		<!-- Areas & Projects -->
 		{#if areasWithProjects.length > 0}
 			<div class="space-y-1">
-				<h3 class="px-3 text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
+				<h3 class="px-3 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase tracking-wider mb-2">
 					Areas & Projects
 				</h3>
 
@@ -291,14 +281,12 @@
 								<a
 									href="/areas/{area.id}"
 									onclick={handleLinkClick}
-									class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-									class:bg-blue-50={isActive(`/areas/${area.id}`)}
-									class:text-blue-700={isActive(`/areas/${area.id}`)}
+									class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClassNoWeight(`/areas/${area.id}`)}"
 								>
 									<div class="flex items-center gap-2 flex-1 min-w-0">
 										<button
 											onclick={(e) => { e.preventDefault(); e.stopPropagation(); toggleArea(area.id); }}
-											class="flex-shrink-0 p-0.5 -ml-0.5 rounded hover:bg-gray-200 transition-colors"
+											class="flex-shrink-0 p-0.5 -ml-0.5 rounded hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors"
 											aria-label={expandedAreas.has(area.id) ? 'Collapse area' : 'Expand area'}
 										>
 											<svg
@@ -313,7 +301,7 @@
 										</button>
 										<span class="font-medium truncate">{area.name}</span>
 									</div>
-									{#if taskCount > 0}<span class="text-xs text-gray-500 flex-shrink-0">{taskCount}</span>{/if}
+									{#if taskCount > 0}<span class="text-xs text-gray-500 dark:text-gray-400 flex-shrink-0">{taskCount}</span>{/if}
 								</a>
 							</SidebarDropZone>
 
@@ -325,9 +313,7 @@
 											<a
 												onclick={handleLinkClick}
 												href="/projects/{project.id}"
-												class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-												class:bg-blue-50={isActive(`/projects/${project.id}`)}
-												class:text-blue-700={isActive(`/projects/${project.id}`)}
+												class="flex items-center justify-between px-3 py-1.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm {activeClassNoWeight(`/projects/${project.id}`)}"
 											>
 												<span>{project.name}</span>
 											</a>
@@ -338,15 +324,13 @@
 						{:else}
 							<!-- Projects without area -->
 							<div class="space-y-1">
-								<div class="px-3 py-1 text-sm text-gray-500 font-medium">Projects</div>
+								<div class="px-3 py-1 text-sm text-gray-500 dark:text-gray-400 font-medium">Projects</div>
 								{#each projects as project}
 									<SidebarDropZone onDrop={(task) => dropToProject(task, project.id, null)}>
 										<a
 											onclick={handleLinkClick}
 											href="/projects/{project.id}"
-											class="flex items-center justify-between px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors text-sm"
-											class:bg-blue-50={isActive(`/projects/${project.id}`)}
-											class:text-blue-700={isActive(`/projects/${project.id}`)}
+											class="flex items-center justify-between px-3 py-1.5 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors text-sm {activeClassNoWeight(`/projects/${project.id}`)}"
 										>
 											<span>{project.name}</span>
 										</a>
@@ -360,14 +344,11 @@
 		{/if}
 
 		<!-- Logbook (Completed) & Trash -->
-		<div class="space-y-1 pt-4 border-t border-gray-200">
+		<div class="space-y-1 pt-4 border-t border-gray-200 dark:border-gray-700">
 			<a
 				href="/logbook"
 				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/logbook')}
-				class:text-blue-700={isActive('/logbook')}
-				class:font-medium={isActive('/logbook')}
+				class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/logbook')}"
 			>
 				<div class="flex items-center gap-2">
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -376,17 +357,14 @@
 					<span>Logbook</span>
 				</div>
 				{#if completedCount > 0}
-					<span class="text-xs font-semibold text-gray-500">{completedCount}</span>
+					<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{completedCount}</span>
 				{/if}
 			</a>
 
 			<a
 				href="/trash"
 				onclick={handleLinkClick}
-				class="flex items-center justify-between px-3 py-2 rounded-lg hover:bg-gray-100 transition-colors"
-				class:bg-blue-50={isActive('/trash')}
-				class:text-blue-700={isActive('/trash')}
-				class:font-medium={isActive('/trash')}
+				class="flex items-center justify-between px-3 py-2 rounded-lg text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClass('/trash')}"
 			>
 				<div class="flex items-center gap-2">
 					<svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -395,19 +373,17 @@
 					<span>Trash</span>
 				</div>
 				{#if trashedCount > 0}
-					<span class="text-xs font-semibold text-gray-500">{trashedCount}</span>
+					<span class="text-xs font-semibold text-gray-500 dark:text-gray-400">{trashedCount}</span>
 				{/if}
 			</a>
 		</div>
 	</nav>
 
-	<div class="p-4 border-t border-gray-200 space-y-1">
+	<div class="p-4 border-t border-gray-200 dark:border-gray-700 space-y-1">
 		<a
 			href="/settings"
 			onclick={handleLinkClick}
-			class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 transition-colors"
-			class:bg-blue-50={isActive('/settings')}
-			class:text-blue-700={isActive('/settings')}
+			class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors {activeClassNoWeight('/settings')}"
 		>
 			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z" />
@@ -417,7 +393,7 @@
 		</a>
 		<button
 			onclick={handleLogout}
-			class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 rounded-lg hover:bg-gray-100 transition-colors"
+			class="w-full flex items-center gap-2 px-3 py-2 text-sm text-gray-500 dark:text-gray-400 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors"
 		>
 			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />

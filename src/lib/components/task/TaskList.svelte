@@ -65,11 +65,11 @@
 
 <div>
 	{#if title}
-		<h2 class="text-xl font-semibold text-gray-900 mb-2">{title}</h2>
+		<h2 class="text-xl font-semibold text-gray-900 dark:text-gray-100 mb-2">{title}</h2>
 	{/if}
 
 	{#if items.length === 0}
-		<p class="text-sm text-gray-500 italic py-4">No tasks</p>
+		<p class="text-sm text-gray-500 dark:text-gray-400 italic py-4">No tasks</p>
 	{:else}
 		<div
 			class="space-y-0.5"

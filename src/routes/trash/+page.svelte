@@ -41,8 +41,8 @@
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	<div class="mb-4 flex items-center justify-between">
 		<div>
-			<h1 class="text-2xl font-bold text-gray-900">Trash</h1>
-			<p class="text-sm text-gray-600 mt-0.5">Deleted tasks</p>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Trash</h1>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Deleted tasks</p>
 		</div>
 		{#if taskStore.trashedTasks.length > 0}
 			<button
@@ -55,26 +55,26 @@
 	</div>
 
 	{#if taskStore.trashedTasks.length === 0}
-		<div class="bg-white rounded-lg shadow-sm p-4 text-center">
-			<svg class="w-10 h-10 mx-auto text-gray-300 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+			<svg class="w-10 h-10 mx-auto text-gray-300 dark:text-gray-600 mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 				<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
 			</svg>
-			<p class="text-sm text-gray-500">Trash is empty</p>
-			<p class="text-xs text-gray-400 mt-0.5">Deleted tasks will appear here</p>
+			<p class="text-sm text-gray-500 dark:text-gray-400">Trash is empty</p>
+			<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">Deleted tasks will appear here</p>
 		</div>
 	{:else}
-		<div class="bg-white rounded-lg shadow-sm">
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
 			{#each taskStore.trashedTasks as task (task.id)}
-				<div class="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 border-b border-gray-100 last:border-0">
+				<div class="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0">
 					<div class="flex-1 min-w-0">
-						<p class="text-sm text-gray-500 line-through">
+						<p class="text-sm text-gray-500 dark:text-gray-400 line-through">
 							{task.title}
 						</p>
 						{#if task.notes}
-							<p class="text-xs text-gray-400 mt-0.5 line-through">{task.notes}</p>
+							<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 line-through">{task.notes}</p>
 						{/if}
 						{#if task.deleted_at}
-							<p class="text-xs text-gray-400 mt-0.5">
+							<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
 								Deleted {new Date(task.deleted_at).toLocaleDateString()}
 							</p>
 						{/if}

@@ -304,10 +304,10 @@
 	}
 </script>
 
-<div class="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 rounded group {draggable ? 'cursor-move' : ''}">
+<div class="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-700 rounded group {draggable ? 'cursor-move' : ''}">
 	{#if draggable}
 		<button
-			class="text-gray-400 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
+			class="text-gray-400 dark:text-gray-500 hover:text-gray-600 opacity-0 group-hover:opacity-100 transition-opacity cursor-grab active:cursor-grabbing flex-shrink-0"
 			aria-label="Drag to reorder"
 		>
 			<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -320,7 +320,7 @@
 		type="checkbox"
 		checked={task.is_completed}
 		onchange={handleToggle}
-		class="w-4 h-4 rounded border-gray-300 flex-shrink-0"
+		class="w-4 h-4 rounded border-gray-300 dark:border-gray-600 flex-shrink-0"
 	/>
 
 	<div class="flex-1 min-w-0">
@@ -331,7 +331,7 @@
 						bind:this={titleInputElement}
 						bind:value={editedTitle}
 						onkeydown={handleTitleKeyDown}
-						class="flex-1 text-sm text-gray-900 border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+						class="flex-1 text-sm text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-blue-500 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 						type="text"
 						placeholder="Task title"
 					/>
@@ -342,47 +342,47 @@
 						bind:this={notesTextareaElement}
 						bind:value={editedNotes}
 						onkeydown={handleNotesKeyDown}
-						class="w-full text-xs text-gray-900 border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y min-h-[60px]"
+						class="w-full text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y min-h-[60px]"
 						placeholder="Notes (Markdown supported)"
 					/>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
-							<label class="text-xs text-gray-600 font-medium">Tags</label>
+							<label class="text-xs text-gray-600 dark:text-gray-400 font-medium">Tags</label>
 							<input
 								bind:value={editedTags}
-								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 								type="text"
 								placeholder="tag1, tag2, tag3"
 							/>
 						</div>
 
 						<div class="flex flex-col gap-1">
-							<label class="text-xs text-gray-600 font-medium">Due Date</label>
+							<label class="text-xs text-gray-600 dark:text-gray-400 font-medium">Due Date</label>
 							<DateInput
 								bind:value={editedDeadline}
-								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 							/>
 						</div>
 					</div>
 
 					<div class="flex flex-col gap-1">
-						<label class="text-xs text-gray-600 font-medium">Reminder</label>
+						<label class="text-xs text-gray-600 dark:text-gray-400 font-medium">Reminder</label>
 						<div class="grid grid-cols-2 gap-2">
 							<DateInput
 								bind:value={editedReminderDate}
-								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 							/>
 							<input
 								bind:value={editedReminderTime}
-								class="text-xs text-gray-900 border border-gray-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
+								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 								type="time"
 								placeholder="Time"
 							/>
 						</div>
 					</div>
 
-					<div class="flex gap-2 text-xs text-gray-500 pt-2 border-t border-gray-200 mt-1">
+					<div class="flex gap-2 text-xs text-gray-500 dark:text-gray-400 pt-2 border-t border-gray-200 dark:border-gray-700 mt-1">
 						<button
 							onclick={saveEditing}
 							class="px-3 py-1.5 bg-blue-500 text-white rounded hover:bg-blue-600 font-medium"
@@ -391,11 +391,11 @@
 						</button>
 						<button
 							onclick={cancelEditing}
-							class="px-3 py-1.5 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 font-medium"
+							class="px-3 py-1.5 bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300 rounded hover:bg-gray-300 dark:hover:bg-gray-600 font-medium"
 						>
 							Cancel
 						</button>
-						<span class="ml-auto self-center text-xs text-gray-400">
+						<span class="ml-auto self-center text-xs text-gray-400 dark:text-gray-500">
 							Cmd/Ctrl+Enter to save, Esc to cancel
 						</span>
 					</div>
@@ -406,7 +406,7 @@
 				{#if task.notes && !isEditing}
 					<button
 						onclick={toggleNotes}
-						class="text-gray-500 hover:text-gray-700 transition-transform p-1 -ml-1 rounded hover:bg-gray-100 touch-manipulation flex-shrink-0"
+						class="text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-transform p-1 -ml-1 rounded hover:bg-gray-100 dark:hover:bg-gray-700 touch-manipulation flex-shrink-0"
 						class:rotate-90={notesExpanded}
 						aria-label={notesExpanded ? 'Hide notes' : 'Show notes'}
 					>
@@ -418,9 +418,10 @@
 
 				<p
 					ondblclick={startEditing}
-					class="text-sm text-gray-900 flex-1 cursor-text"
+					class="text-sm text-gray-900 dark:text-gray-100 flex-1 cursor-text"
 					class:line-through={task.is_completed}
 					class:text-gray-500={task.is_completed}
+					class:dark:text-gray-400={task.is_completed}
 				>
 					{task.title}
 				</p>
@@ -436,7 +437,7 @@
 						startEditing();
 					}}
 					onclick={handleCheckboxClick}
-					class="text-xs text-gray-600 mt-2 ml-5 prose prose-sm max-w-none"
+					class="text-xs text-gray-600 dark:text-gray-400 mt-2 ml-5 prose prose-sm max-w-none"
 					use:enableCheckboxes
 				>
 					{@html renderedNotes}
@@ -465,7 +466,7 @@
 			{/if}
 
 			{#if task.deadline || task.reminder_time}
-				<div class="flex gap-3 mt-1 ml-5 text-xs text-gray-500">
+				<div class="flex gap-3 mt-1 ml-5 text-xs text-gray-500 dark:text-gray-400">
 					{#if task.deadline}
 						<div class="flex items-center gap-1">
 							<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -489,7 +490,7 @@
 
 	<button
 		onclick={handleDelete}
-		class="text-gray-400 hover:text-red-600 text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity"
+		class="text-gray-400 dark:text-gray-500 hover:text-red-600 text-xs px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity"
 	>
 		Delete
 	</button>

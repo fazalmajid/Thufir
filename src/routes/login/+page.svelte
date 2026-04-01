@@ -109,12 +109,12 @@
 	<title>Thufir — Sign in</title>
 </svelte:head>
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+<div class="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
 	<div class="w-full max-w-sm">
-		<div class="bg-white rounded-2xl shadow-sm border border-gray-200 p-8">
+		<div class="bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-gray-200 dark:border-gray-700 p-8">
 			<div class="mb-8 text-center">
-				<h1 class="text-2xl font-bold text-gray-900">Thufir</h1>
-				<p class="text-sm text-gray-500 mt-1">Local-first tasks</p>
+				<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Thufir</h1>
+				<p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Local-first tasks</p>
 			</div>
 
 			{#if mode === 'loading'}
@@ -124,7 +124,7 @@
 
 			{:else if mode === 'login'}
 				<div class="space-y-4">
-					<p class="text-sm text-gray-600 text-center">
+					<p class="text-sm text-gray-600 dark:text-gray-400 text-center">
 						Sign in with your passkey — your device will prompt you to authenticate.
 					</p>
 
@@ -147,12 +147,12 @@
 
 			{:else if mode === 'setup'}
 				<div class="space-y-4">
-					<p class="text-sm text-gray-600 text-center">
+					<p class="text-sm text-gray-600 dark:text-gray-400 text-center">
 						Welcome! Create your account by registering a passkey on this device.
 					</p>
 
 					<div>
-						<label for="displayName" class="block text-sm font-medium text-gray-700 mb-1">
+						<label for="displayName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
 							Your name
 						</label>
 						<input
@@ -161,20 +161,20 @@
 							bind:value={displayName}
 							placeholder="e.g. Majid"
 							autocomplete="name"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
 						/>
 					</div>
 
 					<div>
-						<label for="deviceName" class="block text-sm font-medium text-gray-700 mb-1">
-							Device name <span class="text-gray-400 font-normal">(optional)</span>
+						<label for="deviceName" class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+							Device name <span class="text-gray-400 dark:text-gray-500 font-normal">(optional)</span>
 						</label>
 						<input
 							id="deviceName"
 							type="text"
 							bind:value={deviceName}
 							placeholder="e.g. MacBook Touch ID"
-							class="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+							class="w-full px-3 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
 						/>
 					</div>
 
@@ -201,7 +201,7 @@
 			{/if}
 		</div>
 
-		<p class="mt-4 text-xs text-center text-gray-400">
+		<p class="mt-4 text-xs text-center text-gray-400 dark:text-gray-500">
 			Passkeys are stored on your device. No password needed.
 		</p>
 	</div>

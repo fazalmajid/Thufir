@@ -13,22 +13,22 @@
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	<div class="mb-4">
-		<h1 class="text-2xl font-bold text-gray-900">Someday</h1>
-		<p class="text-sm text-gray-600 mt-0.5">Ideas and tasks for the future</p>
+		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Someday</h1>
+		<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Ideas and tasks for the future</p>
 	</div>
 
-	<div class="bg-white rounded-lg shadow-sm p-3 mb-3">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
 		<TaskQuickAdd status="someday" />
 	</div>
 
-	<div class="bg-white rounded-lg shadow-sm p-0">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0">
 		<TaskList tasks={visibleTasks} title="" enableReorder={false} />
 	</div>
 
 	{#if hasMore}
 		<button
 			onclick={() => page++}
-			class="mt-3 w-full py-2 text-sm text-gray-500 hover:text-gray-700 hover:bg-white rounded-lg transition-colors"
+			class="mt-3 w-full py-2 text-sm text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 hover:bg-white dark:hover:bg-gray-800 rounded-lg transition-colors"
 		>
 			Show more ({allTasks.length - visibleTasks.length} remaining)
 		</button>

@@ -21,32 +21,32 @@
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	{#if area}
 		<div class="mb-4">
-			<h1 class="text-2xl font-bold text-gray-900">{area.name}</h1>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{area.name}</h1>
 		</div>
 
-		<div class="bg-white rounded-lg shadow-sm p-3 mb-3">
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
 			<TaskQuickAdd status="anytime" />
 		</div>
 
 		{#if areaTasks.length > 0}
-			<div class="bg-white rounded-lg shadow-sm p-0 mb-4">
+			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0 mb-4">
 				<TaskList tasks={areaTasks} title="" enableReorder={true} />
 			</div>
 		{/if}
 
 		{#if areaProjects.length > 0}
-			<div class="bg-white rounded-lg shadow-sm divide-y divide-gray-100">
+			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm divide-y divide-gray-100 dark:divide-gray-700">
 				{#each areaProjects as project}
 					{@const count = taskStore.tasks.filter(
 						t => t.project_id === project.id && !t.is_completed && !t.deleted_at
 					).length}
 					<a
 						href="/projects/{project.id}"
-						class="flex items-center px-4 py-3 hover:bg-gray-50 transition-colors"
+						class="flex items-center px-4 py-3 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors"
 					>
-						<span class="font-medium text-gray-900">{project.name}</span>
+						<span class="font-medium text-gray-900 dark:text-gray-100">{project.name}</span>
 						{#if count > 0}
-							<span class="text-xs text-gray-400 ml-auto">{count}</span>
+							<span class="text-xs text-gray-400 dark:text-gray-500 ml-auto">{count}</span>
 						{/if}
 					</a>
 				{/each}
@@ -54,13 +54,13 @@
 		{/if}
 
 		{#if areaTasks.length === 0 && areaProjects.length === 0}
-			<div class="bg-white rounded-lg shadow-sm p-8 text-center">
-				<p class="text-sm text-gray-500">No tasks or projects in this area</p>
+			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
+				<p class="text-sm text-gray-500 dark:text-gray-400">No tasks or projects in this area</p>
 			</div>
 		{/if}
 	{:else}
-		<div class="bg-white rounded-lg shadow-sm p-4 text-center">
-			<p class="text-sm text-gray-500">Area not found</p>
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+			<p class="text-sm text-gray-500 dark:text-gray-400">Area not found</p>
 		</div>
 	{/if}
 </div>

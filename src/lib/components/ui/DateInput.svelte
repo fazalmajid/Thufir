@@ -26,7 +26,7 @@
 		type="button"
 		onclick={openPicker}
 		tabindex="-1"
-		class="absolute right-1.5 text-gray-400 hover:text-gray-600"
+		class="absolute right-1.5 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-400"
 		aria-label="Open date picker"
 	>
 		<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -12,18 +12,18 @@
 	}
 </script>
 
-<header class="md:hidden bg-white border-b border-gray-200 px-4 py-3 flex items-center justify-between">
+<header class="md:hidden bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 py-3 flex items-center justify-between">
 	<button
 		onclick={onMenuToggle}
-		class="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+		class="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors"
 		aria-label="Toggle menu"
 	>
-		<svg class="w-6 h-6 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+		<svg class="w-6 h-6 text-gray-700 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 			<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
 		</svg>
 	</button>
 
-	<h1 class="text-lg font-bold text-gray-900">Thufir</h1>
+	<h1 class="text-lg font-bold text-gray-900 dark:text-gray-100">Thufir</h1>
 
 	<div class="w-10 flex justify-end">
 		{#if $syncError}
@@ -31,7 +31,7 @@
 				⚠ {$syncError}
 			</span>
 		{:else if $lastSync}
-			<span class="text-xs text-gray-400">{fmtTime($lastSync)}</span>
+			<span class="text-xs text-gray-400 dark:text-gray-500">{fmtTime($lastSync)}</span>
 		{/if}
 	</div>
 </header>

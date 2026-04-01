@@ -91,11 +91,11 @@
 		<div class="flex-1 flex flex-col overflow-hidden">
 			<Header onMenuToggle={toggleMobileMenu} />
 			{#if initError}
-				<div class="bg-red-50 border-b border-red-200 px-4 py-2 text-sm text-red-700">
+				<div class="bg-red-50 dark:bg-red-900/30 border-b border-red-200 px-4 py-2 text-sm text-red-700">
 					DB init failed: {initError}
 				</div>
 			{/if}
-			<main class="flex-1 overflow-y-auto bg-gray-50">
+			<main class="flex-1 overflow-y-auto bg-gray-50 dark:bg-gray-900">
 				{@render children()}
 			</main>
 		</div>

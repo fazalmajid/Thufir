@@ -22,22 +22,22 @@
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	{#if project}
 		<div class="mb-4">
-			<h1 class="text-2xl font-bold text-gray-900">{project.name}</h1>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{project.name}</h1>
 			{#if project.notes}
-				<p class="text-sm text-gray-600 mt-0.5">{project.notes}</p>
+				<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">{project.notes}</p>
 			{/if}
 		</div>
 
-		<div class="bg-white rounded-lg shadow-sm p-3 mb-3">
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
 			<TaskQuickAdd status="inbox" />
 		</div>
 
-		<div class="bg-white rounded-lg shadow-sm p-0">
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0">
 			<TaskList tasks={projectTasks} title="" enableReorder={true} />
 		</div>
 	{:else}
-		<div class="bg-white rounded-lg shadow-sm p-4 text-center">
-			<p class="text-sm text-gray-500">Project not found</p>
+		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-4 text-center">
+			<p class="text-sm text-gray-500 dark:text-gray-400">Project not found</p>
 		</div>
 	{/if}
 </div>

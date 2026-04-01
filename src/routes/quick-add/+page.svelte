@@ -34,9 +34,9 @@
 </svelte:head>
 
 {#if error}
-	<div class="min-h-screen bg-white flex items-center justify-center p-6">
+	<div class="min-h-screen bg-white dark:bg-gray-900 flex items-center justify-center p-6">
 		<div class="text-center space-y-3">
-			<p class="text-sm font-medium text-gray-800">Failed to save</p>
+			<p class="text-sm font-medium text-gray-800 dark:text-gray-200">Failed to save</p>
 			<p class="text-xs text-red-500">{error}</p>
 		</div>
 	</div>

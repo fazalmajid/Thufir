@@ -6,15 +6,15 @@
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	<div class="mb-4">
-		<h1 class="text-2xl font-bold text-gray-900">Inbox</h1>
-		<p class="text-sm text-gray-600 mt-0.5">Tasks waiting to be organized</p>
+		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Inbox</h1>
+		<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Tasks waiting to be organized</p>
 	</div>
 
-	<div class="bg-white rounded-lg shadow-sm p-3 mb-3">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
 		<TaskQuickAdd status="inbox" />
 	</div>
 
-	<div class="bg-white rounded-lg shadow-sm p-0">
+	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0">
 		<TaskList tasks={taskStore.inboxTasks} title="" enableReorder={true} />
 	</div>
 </div>

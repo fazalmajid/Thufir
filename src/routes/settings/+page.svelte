@@ -101,25 +101,25 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 </svelte:head>
 
 <div class="max-w-xl mx-auto p-6 space-y-8">
-	<h1 class="text-2xl font-bold text-gray-900">Settings</h1>
+	<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Settings</h1>
 
 	<section class="space-y-4">
-		<h2 class="text-lg font-semibold text-gray-800">Passkeys</h2>
+		<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Passkeys</h2>
 
 		{#if loading}
-			<div class="flex items-center gap-2 text-sm text-gray-500">
+			<div class="flex items-center gap-2 text-sm text-gray-500 dark:text-gray-400">
 				<div class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
 				Loading…
 			</div>
 		{:else}
-			<ul class="divide-y divide-gray-200 border border-gray-200 rounded-lg overflow-hidden">
+			<ul class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
 				{#each devices as device}
-					<li class="flex items-center justify-between px-4 py-3 bg-white">
+					<li class="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800">
 						<div>
-							<p class="text-sm font-medium text-gray-900">
+							<p class="text-sm font-medium text-gray-900 dark:text-gray-100">
 								{device.device_name ?? 'Unnamed passkey'}
 							</p>
-							<p class="text-xs text-gray-400">Added {formatDate(device.created_at)}</p>
+							<p class="text-xs text-gray-400 dark:text-gray-500">Added {formatDate(device.created_at)}</p>
 						</div>
 						<button
 							onclick={() => remove(device.id)}
@@ -134,13 +134,13 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 			</ul>
 		{/if}
 
-		<div class="bg-gray-50 border border-gray-200 rounded-lg p-4 space-y-3">
-			<p class="text-sm font-medium text-gray-700">Enroll a new passkey</p>
+		<div class="bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4 space-y-3">
+			<p class="text-sm font-medium text-gray-700 dark:text-gray-300">Enroll a new passkey</p>
 			<input
 				type="text"
 				bind:value={newDeviceName}
 				placeholder="Device name (optional, e.g. iPhone)"
-				class="w-full px-3 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+				class="w-full px-3 py-2 text-sm border border-gray-300 dark:border-gray-600 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-gray-100"
 			/>
 			<button
 				onclick={enroll}
@@ -168,12 +168,12 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 	</section>
 
 	<section class="space-y-4">
-		<h2 class="text-lg font-semibold text-gray-800">Bookmarklet</h2>
-		<p class="text-sm text-gray-600">
+		<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Bookmarklet</h2>
+		<p class="text-sm text-gray-600 dark:text-gray-400">
 			Drag the button below to your browser toolbar. Clicking it on any page will save
 			that page's title and URL as a new task in your Thufir inbox.
 		</p>
-		<div class="flex items-center gap-4 bg-gray-50 border border-gray-200 rounded-lg p-4">
+		<div class="flex items-center gap-4 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-4">
 			<a
 				href={bookmarkletHref}
 				onclick={(e) => e.preventDefault()}
@@ -185,7 +185,7 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 				</svg>
 				Add to Thufir
 			</a>
-			<p class="text-xs text-gray-500">Drag to your bookmarks toolbar</p>
+			<p class="text-xs text-gray-500 dark:text-gray-400">Drag to your bookmarks toolbar</p>
 		</div>
 	</section>
 </div>

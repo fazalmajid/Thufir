@@ -21,7 +21,7 @@
 
 <div
 	bind:this={zoneEl}
-	class="rounded-lg transition-colors {isOver && dragStore.task ? 'ring-2 ring-blue-400 bg-blue-50' : ''}"
+	class="rounded-lg transition-colors {isOver && dragStore.task ? 'ring-2 ring-blue-400 bg-blue-50 dark:bg-blue-900/30' : ''}"
 >
 	{@render children()}
 </div>
