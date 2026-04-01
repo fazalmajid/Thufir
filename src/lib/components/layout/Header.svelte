@@ -8,7 +8,7 @@
 	let { onMenuToggle }: Props = $props();
 
 	function fmtTime(d: Date) {
-		return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+		return d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
 	}
 </script>
 
