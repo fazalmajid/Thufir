@@ -3,10 +3,10 @@
 	import { onMount } from 'svelte';
 
 	onMount(() => {
-		goto('/inbox');
+		goto('/today');
 	});
 </script>
 
 <div class="flex items-center justify-center h-full">
-	<p class="text-gray-500">Redirecting to Inbox...</p>
+	<p class="text-gray-500">Redirecting...</p>
 </div>
