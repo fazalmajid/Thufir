@@ -114,14 +114,14 @@
 		const target = taskStore.tasks.filter(
 			(t) => t.area_id === areaId && !t.project_id && !t.is_completed && !t.deleted_at
 		);
-		taskStore.update(task.id, { area_id: areaId, project_id: null, sort_order: topSortOrder(target) });
+		taskStore.update(task.id, { area_id: areaId, project_id: null, status: 'anytime', sort_order: topSortOrder(target) });
 	}
 
 	function dropToProject(task: Task, projectId: string, areaId: string | null) {
 		const target = taskStore.tasks.filter(
 			(t) => t.project_id === projectId && !t.is_completed && !t.deleted_at
 		);
-		taskStore.update(task.id, { project_id: projectId, area_id: areaId, sort_order: topSortOrder(target) });
+		taskStore.update(task.id, { project_id: projectId, area_id: areaId, status: 'anytime', sort_order: topSortOrder(target) });
 	}
 
 	// Search functionality
