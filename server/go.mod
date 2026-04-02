@@ -19,6 +19,7 @@ require (
 	github.com/jackc/puddle/v2 v2.2.2 // indirect
 	github.com/mfridman/interpolate v0.0.2 // indirect
 	github.com/mitchellh/mapstructure v1.5.0 // indirect
+	github.com/mssola/useragent v1.0.0 // indirect
 	github.com/pressly/goose/v3 v3.27.0 // indirect
 	github.com/sethvargo/go-retry v0.3.0 // indirect
 	github.com/x448/float16 v0.8.4 // indirect

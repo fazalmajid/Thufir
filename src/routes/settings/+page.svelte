@@ -14,6 +14,15 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 
 	
 
+	interface Session {
+		id: string;
+		ua_display: string | null;
+		ip_address: string | null;
+		created_at: string;
+		expires_at: string;
+		is_current: boolean;
+	}
+
 	interface Device {
 		id: string;
 		device_name: string | null;
@@ -22,6 +31,7 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 	}
 
 	let devices = $state<Device[]>([]);
+	let sessions = $state<Session[]>([]);
 	let loading = $state(true);
 	let enrolling = $state(false);
 	let newDeviceName = $state('');
@@ -32,6 +42,19 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 		const res = await fetch(`/api/auth/devices`, { credentials: 'include' });
 		devices = await res.json();
 		loading = false;
+	}
+
+	async function loadSessions() {
+		const res = await fetch(`/api/auth/sessions`, { credentials: 'include' });
+		if (res.ok) sessions = await res.json();
+	}
+
+	async function deleteSession(id: string) {
+		const res = await fetch(`/api/auth/sessions/${id}`, {
+			method: 'DELETE',
+			credentials: 'include',
+		});
+		if (res.ok) await loadSessions();
 	}
 
 	async function enroll() {
@@ -93,7 +116,7 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 		return new Date(iso).toLocaleDateString(undefined, { dateStyle: 'medium' });
 	}
 
-	onMount(loadDevices);
+	onMount(() => { loadDevices(); loadSessions(); });
 </script>
 
 <svelte:head>
@@ -164,6 +187,38 @@ window.open('${ORIGIN}/quick-add?title='+t+'&url='+u,'_blank');
 		{/if}
 		{#if success}
 			<p class="text-sm text-green-600">{success}</p>
+		{/if}
+	</section>
+
+	<section class="space-y-4">
+		<h2 class="text-lg font-semibold text-gray-800 dark:text-gray-200">Active Sessions</h2>
+		{#if sessions.length === 0}
+			<p class="text-sm text-gray-500 dark:text-gray-400">No active sessions found.</p>
+		{:else}
+			<ul class="divide-y divide-gray-200 dark:divide-gray-700 border border-gray-200 dark:border-gray-700 rounded-lg overflow-hidden">
+				{#each sessions as session}
+					<li class="flex items-center justify-between px-4 py-3 bg-white dark:bg-gray-800">
+						<div class="min-w-0 flex-1">
+							<p class="text-sm font-medium text-gray-900 dark:text-gray-100 flex items-center gap-2">
+								{session.ua_display ?? 'Unknown device'}
+								{#if session.is_current}
+									<span class="text-xs px-1.5 py-0.5 bg-blue-100 dark:bg-blue-900/40 text-blue-700 dark:text-blue-300 rounded">current</span>
+								{/if}
+							</p>
+							<p class="text-xs text-gray-400 dark:text-gray-500">
+								{session.ip_address ?? 'unknown IP'} · signed in {formatDate(session.created_at)}
+							</p>
+						</div>
+						<button
+							onclick={() => deleteSession(session.id)}
+							title="Sign out this session"
+							class="ml-4 text-sm text-red-500 hover:text-red-700 dark:hover:text-red-400 transition-colors flex-shrink-0"
+						>
+							Sign out
+						</button>
+					</li>
+				{/each}
+			</ul>
 		{/if}
 	</section>
 

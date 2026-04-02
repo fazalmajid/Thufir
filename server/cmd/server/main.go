@@ -62,6 +62,8 @@ func main() {
 		r.Post("/device/verify", auth.HandleDeviceVerify(pool, wa, cs, cfg))
 		r.Get("/devices", auth.HandleListDevices(pool))
 		r.Delete("/devices/{id}", auth.HandleDeleteDevice(pool))
+		r.Get("/sessions", auth.HandleListSessions(pool))
+		r.Delete("/sessions/{id}", auth.HandleDeleteSession(pool))
 	})
 
 	// ── task quick-add (session required) ─────────────────────────────────────

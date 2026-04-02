@@ -15,6 +15,32 @@ import (
 	"thufir/internal/config"
 )
 
+// clientIP extracts the real client IP, respecting X-Forwarded-For from proxies.
+func clientIP(r *http.Request) string {
+	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
+		// Take the first (client) IP in the chain.
+		if idx := len(xff); idx > 0 {
+			for i := 0; i < len(xff); i++ {
+				if xff[i] == ',' {
+					return xff[:i]
+				}
+			}
+		}
+		return xff
+	}
+	if xri := r.Header.Get("X-Real-IP"); xri != "" {
+		return xri
+	}
+	// Strip port from RemoteAddr.
+	addr := r.RemoteAddr
+	for i := len(addr) - 1; i >= 0; i-- {
+		if addr[i] == ':' {
+			return addr[:i]
+		}
+	}
+	return addr
+}
+
 // ── helpers ────────────────────────────────────────────────────────────────────
 
 func writeJSON(w http.ResponseWriter, status int, v any) {
@@ -285,7 +311,7 @@ func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 			return
 		}
 
-		sessionID, err := CreateSession(r.Context(), pool, body.UserID)
+		sessionID, err := CreateSession(r.Context(), pool, body.UserID, r.UserAgent(), clientIP(r))
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "create session")
 			return
@@ -373,7 +399,7 @@ func HandleLoginVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 			UPDATE credential SET sign_count = $1, backup_state = $2 WHERE credential_id = $3
 		`, cred.Authenticator.SignCount, cred.Flags.BackupState, CredentialIDToBase64(cred.ID))
 
-		sessionID, err := CreateSession(r.Context(), pool, foundUserID)
+		sessionID, err := CreateSession(r.Context(), pool, foundUserID, r.UserAgent(), clientIP(r))
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "create session")
 			return
@@ -548,6 +574,92 @@ func HandleListDevices(pool *pgxpool.Pool) http.HandlerFunc {
 			devices = []device{}
 		}
 		writeJSON(w, http.StatusOK, devices)
+	}
+}
+
+func HandleListSessions(pool *pgxpool.Pool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err != nil {
+			writeErr(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		info, err := ValidateSession(r.Context(), pool, cookie.Value)
+		if err != nil {
+			writeErr(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+
+		rows, err := pool.Query(r.Context(), `
+			SELECT id::text, ua_display, ip_address, created_at, expires_at
+			FROM session
+			WHERE user_id = $1::uuid AND expires_at > NOW()
+			ORDER BY created_at DESC
+		`, info.UserID)
+		if err != nil {
+			writeErr(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		defer rows.Close()
+
+		type sessionInfo struct {
+			ID         string  `json:"id"`
+			UADisplay  *string `json:"ua_display"`
+			IPAddress  *string `json:"ip_address"`
+			CreatedAt  string  `json:"created_at"`
+			ExpiresAt  string  `json:"expires_at"`
+			IsCurrent  bool    `json:"is_current"`
+		}
+		var sessions []sessionInfo
+		for rows.Next() {
+			var s sessionInfo
+			var createdAt, expiresAt time.Time
+			if err := rows.Scan(&s.ID, &s.UADisplay, &s.IPAddress, &createdAt, &expiresAt); err != nil {
+				writeErr(w, http.StatusInternalServerError, "scan")
+				return
+			}
+			s.CreatedAt = createdAt.UTC().Format(time.RFC3339)
+			s.ExpiresAt = expiresAt.UTC().Format(time.RFC3339)
+			s.IsCurrent = s.ID == cookie.Value
+			sessions = append(sessions, s)
+		}
+		if sessions == nil {
+			sessions = []sessionInfo{}
+		}
+		writeJSON(w, http.StatusOK, sessions)
+	}
+}
+
+func HandleDeleteSession(pool *pgxpool.Pool) http.HandlerFunc {
+	return func(w http.ResponseWriter, r *http.Request) {
+		cookie, err := r.Cookie("session")
+		if err != nil {
+			writeErr(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+		info, err := ValidateSession(r.Context(), pool, cookie.Value)
+		if err != nil {
+			writeErr(w, http.StatusUnauthorized, "unauthorized")
+			return
+		}
+
+		sessionID := chi.URLParam(r, "id")
+
+		// Verify the session belongs to this user before deleting.
+		var ownerID string
+		if err := pool.QueryRow(r.Context(),
+			`SELECT user_id::text FROM session WHERE id = $1::uuid`,
+			sessionID,
+		).Scan(&ownerID); err != nil || ownerID != info.UserID {
+			writeErr(w, http.StatusNotFound, "session not found")
+			return
+		}
+
+		if err := DeleteSession(r.Context(), pool, sessionID); err != nil {
+			writeErr(w, http.StatusInternalServerError, "db error")
+			return
+		}
+		writeJSON(w, http.StatusOK, map[string]bool{"success": true})
 	}
 }
 
