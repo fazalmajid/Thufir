@@ -9,11 +9,20 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/go-webauthn/webauthn/protocol/webauthncose"
 	"github.com/go-webauthn/webauthn/webauthn"
 	"github.com/jackc/pgx/v5/pgxpool"
 
 	"thufir/internal/config"
 )
+
+// androidCompatParams restricts pubKeyCredParams to ES256 + RS256 only.
+// Android's Credential Manager has compatibility issues with some of the
+// less common algorithms (ES384, EdDSA, etc.) that go-webauthn includes by default.
+var androidCompatParams = webauthn.WithCredentialParameters([]protocol.CredentialParameter{
+	{Type: protocol.PublicKeyCredentialType, Algorithm: webauthncose.AlgES256},
+	{Type: protocol.PublicKeyCredentialType, Algorithm: webauthncose.AlgRS256},
+})
 
 // clientIP extracts the real client IP, respecting X-Forwarded-For from proxies.
 func clientIP(r *http.Request) string {
@@ -218,7 +227,13 @@ func HandleSetupOptions(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challenge
 
 		user := &waUser{id: userUUID, displayName: body.DisplayName}
 		creation, session, err := wa.BeginRegistration(user,
-			webauthn.WithResidentKeyRequirement(protocol.ResidentKeyRequirementRequired),
+			webauthn.WithAuthenticatorSelection(protocol.AuthenticatorSelection{
+				RequireResidentKey: protocol.ResidentKeyNotRequired(),
+				ResidentKey:        protocol.ResidentKeyRequirementPreferred,
+				UserVerification:   protocol.VerificationPreferred,
+			}),
+			webauthn.WithConveyancePreference(protocol.PreferNoAttestation),
+			androidCompatParams,
 		)
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "begin registration: "+err.Error())
@@ -325,7 +340,9 @@ func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 
 func HandleLoginOptions(wa *webauthn.WebAuthn, cs *ChallengeStore, cfg config.Config) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		assertion, session, err := wa.BeginDiscoverableLogin()
+		assertion, session, err := wa.BeginDiscoverableLogin(
+			webauthn.WithUserVerification(protocol.VerificationPreferred),
+		)
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "begin login: "+err.Error())
 			return
@@ -437,18 +454,25 @@ func HandleDeviceOptions(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challeng
 			return
 		}
 
+		// Exclude already-enrolled credentials (no transports — Android Credential Manager
+		// can mishandle transport hints from credentials enrolled on other platforms).
 		excludeList := make([]protocol.CredentialDescriptor, len(user.creds))
 		for i, c := range user.creds {
 			excludeList[i] = protocol.CredentialDescriptor{
 				Type:         protocol.PublicKeyCredentialType,
 				CredentialID: c.ID,
-				Transport:    c.Transport,
 			}
 		}
 
 		creation, session, err := wa.BeginRegistration(user,
-			webauthn.WithResidentKeyRequirement(protocol.ResidentKeyRequirementRequired),
+			webauthn.WithAuthenticatorSelection(protocol.AuthenticatorSelection{
+				RequireResidentKey: protocol.ResidentKeyNotRequired(),
+				ResidentKey:        protocol.ResidentKeyRequirementPreferred,
+				UserVerification:   protocol.VerificationPreferred,
+			}),
+			webauthn.WithConveyancePreference(protocol.PreferNoAttestation),
 			webauthn.WithExclusions(excludeList),
+			androidCompatParams,
 		)
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "begin registration: "+err.Error())
