@@ -2,6 +2,8 @@ package auth
 
 import (
 	"encoding/json"
+	"fmt"
+	"log"
 	"net/http"
 	"time"
 
@@ -84,7 +86,7 @@ func loadUserWithCredentials(r *http.Request, pool *pgxpool.Pool, userID string)
 	}
 
 	rows, err := pool.Query(r.Context(), `
-		SELECT credential_id, public_key, sign_count, transports
+		SELECT credential_id, public_key, sign_count, transports, backup_eligible, backup_state
 		FROM credential WHERE user_id = $1::uuid
 	`, userID)
 	if err != nil {
@@ -98,7 +100,8 @@ func loadUserWithCredentials(r *http.Request, pool *pgxpool.Pool, userID string)
 		var pubKey []byte
 		var signCount int64
 		var transports []string
-		if err := rows.Scan(&credIDBase64, &pubKey, &signCount, &transports); err != nil {
+		var backupEligible, backupState bool
+		if err := rows.Scan(&credIDBase64, &pubKey, &signCount, &transports, &backupEligible, &backupState); err != nil {
 			return nil, err
 		}
 		credID, err := Base64ToCredentialID(credIDBase64)
@@ -113,6 +116,10 @@ func loadUserWithCredentials(r *http.Request, pool *pgxpool.Pool, userID string)
 			ID:        credID,
 			PublicKey: pubKey,
 			Transport: t,
+			Flags: webauthn.CredentialFlags{
+				BackupEligible: backupEligible,
+				BackupState:    backupState,
+			},
 			Authenticator: webauthn.Authenticator{
 				SignCount: uint32(signCount),
 			},
@@ -263,10 +270,11 @@ func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 			transports[i] = string(t)
 		}
 		if _, err := tx.Exec(r.Context(), `
-			INSERT INTO credential (user_id, credential_id, public_key, sign_count, transports, device_name)
-			VALUES ($1::uuid, $2, $3, $4, $5, $6)
+			INSERT INTO credential (user_id, credential_id, public_key, sign_count, transports, device_name, backup_eligible, backup_state)
+			VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)
 		`, body.UserID, CredentialIDToBase64(cred.ID), cred.PublicKey,
 			cred.Authenticator.SignCount, transports, body.DeviceName,
+			cred.Flags.BackupEligible, cred.Flags.BackupState,
 		); err != nil {
 			writeErr(w, http.StatusInternalServerError, "save credential: "+err.Error())
 			return
@@ -333,6 +341,18 @@ func HandleLoginVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 		var foundUserID string
 		handler := func(rawID, userHandle []byte) (webauthn.User, error) {
 			uid := string(userHandle)
+
+			// Apple Passkeys may omit the user handle; fall back to credential ID lookup.
+			if uid == "" {
+				credIDBase64 := CredentialIDToBase64(rawID)
+				if err := pool.QueryRow(r.Context(),
+					`SELECT user_id::text FROM credential WHERE credential_id = $1`,
+					credIDBase64,
+				).Scan(&uid); err != nil {
+					return nil, fmt.Errorf("credential not found for rawID: %w", err)
+				}
+			}
+
 			user, err := loadUserWithCredentials(r, pool, uid)
 			if err != nil {
 				return nil, err
@@ -343,14 +363,15 @@ func HandleLoginVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 
 		cred, err := wa.ValidateDiscoverableLogin(handler, *session, parsed)
 		if err != nil {
+			log.Printf("ValidateDiscoverableLogin error: %v", err)
 			writeErr(w, http.StatusUnauthorized, "authentication failed")
 			return
 		}
 
-		// Update sign count to prevent replay attacks
+		// Update mutable fields after successful authentication.
 		_, _ = pool.Exec(r.Context(), `
-			UPDATE credential SET sign_count = $1 WHERE credential_id = $2
-		`, cred.Authenticator.SignCount, CredentialIDToBase64(cred.ID))
+			UPDATE credential SET sign_count = $1, backup_state = $2 WHERE credential_id = $3
+		`, cred.Authenticator.SignCount, cred.Flags.BackupState, CredentialIDToBase64(cred.ID))
 
 		sessionID, err := CreateSession(r.Context(), pool, foundUserID)
 		if err != nil {
@@ -470,10 +491,11 @@ func HandleDeviceVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *Challenge
 			transports[i] = string(t)
 		}
 		if _, err := pool.Exec(r.Context(), `
-			INSERT INTO credential (user_id, credential_id, public_key, sign_count, transports, device_name)
-			VALUES ($1::uuid, $2, $3, $4, $5, $6)
+			INSERT INTO credential (user_id, credential_id, public_key, sign_count, transports, device_name, backup_eligible, backup_state)
+			VALUES ($1::uuid, $2, $3, $4, $5, $6, $7, $8)
 		`, info.UserID, CredentialIDToBase64(cred.ID), cred.PublicKey,
 			cred.Authenticator.SignCount, transports, body.DeviceName,
+			cred.Flags.BackupEligible, cred.Flags.BackupState,
 		); err != nil {
 			writeErr(w, http.StatusInternalServerError, "save credential: "+err.Error())
 			return
