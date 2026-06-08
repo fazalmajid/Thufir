@@ -160,10 +160,10 @@ func (e *sessionLogEntry) Write(status, bytes int, _ http.Header, elapsed time.D
 			sid = sid[:8]
 		}
 	}
-	log.Printf("%s %s %d %dB %s session=%s",
+	log.Printf("%s %s %d %dB %s session=%s ip=%s",
 		e.r.Method, e.r.RequestURI, status, bytes,
 		fmt.Sprintf("%.3fms", float64(elapsed.Microseconds())/1000),
-		sid,
+		sid, auth.ClientIP(e.r),
 	)
 }
 
@@ -210,7 +210,7 @@ func spaHandler(fsys fs.FS) http.HandlerFunc {
 		}
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
 		w.Header().Set("Cache-Control", "no-cache")
-		w.WriteHeader(http.StatusOK)
+		w.WriteHeader(http.StatusNotFound)
 		w.Write(indexHTML) //nolint:errcheck
 	}
 }

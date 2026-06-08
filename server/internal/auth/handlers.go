@@ -24,8 +24,8 @@ var androidCompatParams = webauthn.WithCredentialParameters([]protocol.Credentia
 	{Type: protocol.PublicKeyCredentialType, Algorithm: webauthncose.AlgRS256},
 })
 
-// clientIP extracts the real client IP, respecting X-Forwarded-For from proxies.
-func clientIP(r *http.Request) string {
+// ClientIP extracts the real client IP, respecting X-Forwarded-For from proxies.
+func ClientIP(r *http.Request) string {
 	if xff := r.Header.Get("X-Forwarded-For"); xff != "" {
 		// Take the first (client) IP in the chain.
 		if idx := len(xff); idx > 0 {
@@ -326,7 +326,7 @@ func HandleSetupVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 			return
 		}
 
-		sessionID, err := CreateSession(r.Context(), pool, body.UserID, r.UserAgent(), clientIP(r))
+		sessionID, err := CreateSession(r.Context(), pool, body.UserID, r.UserAgent(), ClientIP(r))
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "create session")
 			return
@@ -416,7 +416,7 @@ func HandleLoginVerify(pool *pgxpool.Pool, wa *webauthn.WebAuthn, cs *ChallengeS
 			UPDATE credential SET sign_count = $1, backup_state = $2 WHERE credential_id = $3
 		`, cred.Authenticator.SignCount, cred.Flags.BackupState, CredentialIDToBase64(cred.ID))
 
-		sessionID, err := CreateSession(r.Context(), pool, foundUserID, r.UserAgent(), clientIP(r))
+		sessionID, err := CreateSession(r.Context(), pool, foundUserID, r.UserAgent(), ClientIP(r))
 		if err != nil {
 			writeErr(w, http.StatusInternalServerError, "create session")
 			return
