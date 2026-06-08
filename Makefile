@@ -33,10 +33,12 @@ server:
 
 ## Remove all build outputs.
 clean:
-	rm -rf dist $(BINARY)
-	find $(EMBED_DIR) -mindepth 1 \
+	-rm -rf dist $(BINARY)
+	-find $(EMBED_DIR) -mindepth 1 \
 		! -name '.gitignore' ! -name 'placeholder.txt' \
 		-delete 2>/dev/null || true
+	-chmod -R 777 .svelte-kit
+	-rm -rf .svelte-kit
 
 ## Full build then run.
 run: build
