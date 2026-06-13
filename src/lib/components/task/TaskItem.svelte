@@ -155,6 +155,28 @@
 		}
 	}
 
+	// Double-tap detection for the title: dblclick doesn't fire reliably on mobile.
+	let lastTitleTap = 0;
+	function handleTitleClick() {
+		const now = Date.now();
+		if (now - lastTitleTap < 300) {
+			lastTitleTap = 0;
+			startEditing();
+		} else {
+			lastTitleTap = now;
+		}
+	}
+
+	// Explicit link handler for the notes area: Android Chrome doesn't reliably
+	// follow target="_blank" links in dynamically injected HTML, but window.open
+	// called synchronously within a click handler (user gesture) always works.
+	function handleNotesClick(e: MouseEvent) {
+		const a = (e.target as HTMLElement).closest('a');
+		if (!a) return;
+		e.preventDefault();
+		window.open((a as HTMLAnchorElement).href, '_blank', 'noopener,noreferrer');
+	}
+
 	function handleNotesKeyDown(e: KeyboardEvent) {
 		if (e.key === 'Escape') {
 			e.preventDefault();
@@ -207,29 +229,30 @@
 		return html;
 	});
 
-	// Svelte action to forcibly enable all checkboxes and add tracking attributes
+	// Svelte action to forcibly enable all checkboxes and attach click handlers directly.
+	// Direct listeners avoid having a parent onclick that blocks <a> navigation on Android.
 	function enableCheckboxes(node: HTMLElement) {
 		const enableAll = () => {
 			const checkboxes = node.querySelectorAll('input[type="checkbox"]');
 			checkboxes.forEach((checkbox, index) => {
 				const input = checkbox as HTMLInputElement;
-				// Remove disabled attribute
 				input.removeAttribute('disabled');
 
-				// Add our custom attributes if they don't exist
 				if (!input.hasAttribute('data-checkbox-index')) {
 					input.setAttribute('data-checkbox-index', index.toString());
 				}
 				if (!input.classList.contains('task-checkbox')) {
 					input.classList.add('task-checkbox');
 				}
+				if (!input.dataset.listenerAttached) {
+					input.dataset.listenerAttached = '1';
+					input.addEventListener('click', handleCheckboxClick);
+				}
 			});
 		};
 
-		// Enable immediately
 		enableAll();
 
-		// Use MutationObserver to enable checkboxes whenever the content changes
 		const observer = new MutationObserver(enableAll);
 		observer.observe(node, { childList: true, subtree: true });
 
@@ -417,8 +440,8 @@
 				{/if}
 
 				<p
-					ondblclick={startEditing}
-					class="text-sm text-gray-900 dark:text-gray-100 flex-1 cursor-text"
+					onclick={handleTitleClick}
+					class="text-sm text-gray-900 dark:text-gray-100 flex-1 cursor-text touch-manipulation"
 					class:line-through={task.is_completed}
 					class:text-gray-500={task.is_completed}
 					class:dark:text-gray-400={task.is_completed}
@@ -429,15 +452,8 @@
 
 			{#if task.notes && notesExpanded}
 				<div
-					ondblclick={(e) => {
-						// Don't start editing if clicking on a checkbox
-						if ((e.target as HTMLElement).classList.contains('task-checkbox')) {
-							return;
-						}
-						startEditing();
-					}}
-					onclick={handleCheckboxClick}
-					class="text-xs text-gray-600 dark:text-gray-400 mt-2 ml-5 prose prose-sm max-w-none"
+					onclick={handleNotesClick}
+					class="text-xs text-gray-600 dark:text-gray-400 mt-2 ml-5 prose prose-sm max-w-none touch-manipulation"
 					use:enableCheckboxes
 				>
 					{@html renderedNotes}

@@ -29,7 +29,7 @@
 		</div>
 
 		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
-			<TaskQuickAdd status="inbox" />
+			<TaskQuickAdd status="anytime" project_id={projectId} />
 		</div>
 
 		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0">

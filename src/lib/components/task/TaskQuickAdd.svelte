@@ -4,9 +4,11 @@
 
 	interface Props {
 		status?: TaskStatus;
+		area_id?: string;
+		project_id?: string;
 	}
 
-	let { status = 'inbox' }: Props = $props();
+	let { status = 'inbox', area_id, project_id }: Props = $props();
 
 	let title = $state('');
 	let isSubmitting = $state(false);
@@ -19,9 +21,24 @@
 		isSubmitting = true;
 
 		try {
+			const contextTasks = taskStore.tasks.filter(t => {
+				if (!t.is_completed && !t.deleted_at) {
+					if (project_id) return t.project_id === project_id;
+					if (area_id) return t.area_id === area_id && !t.project_id;
+					return t.status === status;
+				}
+				return false;
+			});
+			const sort_order = contextTasks.length > 0
+				? Math.min(...contextTasks.map(t => t.sort_order)) - 1
+				: 0;
+
 			await taskStore.create({
 				title: title.trim(),
-				status
+				status,
+				sort_order,
+				...(area_id ? { area_id } : {}),
+				...(project_id ? { project_id } : {})
 			});
 			title = '';
 		} catch (err) {

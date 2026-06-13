@@ -25,7 +25,7 @@
 		</div>
 
 		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
-			<TaskQuickAdd status="anytime" />
+			<TaskQuickAdd status="anytime" area_id={areaId} />
 		</div>
 
 		{#if areaTasks.length > 0}
