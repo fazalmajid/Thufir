@@ -1,7 +1,7 @@
 <script lang="ts">
 	import type { Task } from '$lib/types/task';
 	import TaskItem from './TaskItem.svelte';
-	import { dndzone, TRIGGERS } from 'svelte-dnd-action';
+	import { dragHandleZone, TRIGGERS } from 'svelte-dnd-action';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { dragStore } from '$lib/stores/drag.svelte';
 	import { flip } from 'svelte/animate';
@@ -39,10 +39,10 @@
 	async function handleDndFinalize(e: CustomEvent<{ items: Task[]; info: { trigger: string; id: string } }>) {
 		const { items: finalItems, info } = e.detail;
 		const droppedToZone = dragStore.dropped; // capture before clear()
-		isDragging = false;
 		dragStore.clear();
 
 		if (info.trigger === TRIGGERS.DROPPED_OUTSIDE_OF_ANY) {
+			isDragging = false;
 			if (droppedToZone) {
 				// The $effect will filter this task out until the API confirms removal.
 				excludeId = info.id;
@@ -60,6 +60,9 @@
 				items = [...tasks];
 			}
 		}
+		// Release the $effect block only after all patches are done so the N
+		// intermediate RxDB subscription fires don't each trigger a flip animation.
+		isDragging = false;
 	}
 </script>
 
@@ -73,7 +76,7 @@
 	{:else}
 		<div
 			class="space-y-0.5"
-			use:dndzone={{
+			use:dragHandleZone={{
 				items,
 				dragDisabled: !enableReorder,
 				dropTargetStyle: {},
