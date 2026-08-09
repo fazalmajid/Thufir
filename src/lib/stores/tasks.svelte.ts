@@ -55,10 +55,25 @@ class TaskStore {
 		try {
 			const db = await getDB();
 			// Live query — re-runs whenever any task changes locally or syncs.
+			// Every emission re-maps the *entire* collection, so without this,
+			// every task (not just the one that changed) would get a brand new
+			// object reference — forcing every TaskItem to re-render and every
+			// row to re-run its flip animation on each single edit. Reusing the
+			// previous reference for docs whose content didn't change keeps
+			// unrelated rows untouched.
+			let previousById = new Map<string, Task>();
 			db.tasks
 				.find({ selector: {}, sort: [{ sort_order: 'asc' }] })
 				.$.subscribe((docs) => {
-					this.tasks = docs.map((d) => d.toJSON() as Task);
+					const nextById = new Map<string, Task>();
+					this.tasks = docs.map((d) => {
+						const json = d.toJSON() as Task;
+						const previous = previousById.get(json.id);
+						const stable = previous && JSON.stringify(previous) === JSON.stringify(json) ? previous : json;
+						nextById.set(stable.id, stable);
+						return stable;
+					});
+					previousById = nextById;
 					this.loading = false;
 				});
 		} catch (err) {
@@ -98,7 +113,7 @@ class TaskStore {
 		const doc = await db.tasks.findOne(id).exec();
 		if (!doc) throw new Error(`Task ${id} not found`);
 		try {
-			await doc.patch(updates);
+			await doc.patch({ ...updates, updated_at: new Date().toISOString() });
 		} catch (err) {
 			this.error = err instanceof Error ? err.message : 'Failed to update task';
 			throw err;
