@@ -3,7 +3,7 @@ export type TaskStatus = 'inbox' | 'today' | 'upcoming' | 'anytime' | 'someday' 
 export interface Task {
 	id: string;
 	title: string;
-	notes?: string;
+	notes?: string | null;
 
 	// Hierarchy
 	project_id?: string | null;
@@ -43,7 +43,7 @@ export interface Task {
 export interface CreateTaskInput {
 	id: string;
 	title: string;
-	notes?: string;
+	notes?: string | null;
 	project_id?: string | null;
 	area_id?: string | null;
 	status?: TaskStatus;
@@ -52,6 +52,7 @@ export interface CreateTaskInput {
 	tags?: string[];
 	is_flagged?: boolean;
 	priority?: number;
+	sort_order?: number;
 }
 
 export interface UpdateTaskInput {
@@ -67,5 +68,6 @@ export interface UpdateTaskInput {
 	is_flagged?: boolean;
 	priority?: number;
 	is_completed?: boolean;
+	completed_at?: string | null;
 	sort_order?: number;
 }

@@ -38,7 +38,7 @@ def test_edit_title_and_notes_persist(authed_page, db, test_user_id, marker):
     title_input = page.get_by_placeholder("Task title")
     title_input.fill(new_title)
     page.get_by_placeholder("Notes (Markdown supported)").fill("some notes here")
-    page.get_by_role("button", name="Save").click()
+    page.get_by_role("button", name="Save", exact=True).click()
 
     expect(page.get_by_text(new_title, exact=True)).to_be_visible()
 

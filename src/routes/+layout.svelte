@@ -1,5 +1,6 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
+	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { taskStore } from '$lib/stores/tasks.svelte';
@@ -10,6 +11,7 @@
 	import { getDB } from '$lib/db/index';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
 	import Header from '$lib/components/layout/Header.svelte';
+	import { pwaInfo } from 'virtual:pwa-info';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
@@ -18,6 +20,23 @@
 	let isAuthenticated = $state(false);
 	let initError = $state<string | null>(null);
 	let dbInitialized = $state(false);
+
+	// pwaInfo is undefined in dev (devOptions.enabled: false) and only
+	// populated in the production build — same convention as the
+	// import.meta.env.DEV checks elsewhere in this file.
+	onMount(async () => {
+		if (!pwaInfo) return;
+		const { useRegisterSW } = await import('virtual:pwa-register/svelte');
+		useRegisterSW({
+			immediate: true,
+			onRegisteredSW(_url, registration) {
+				console.log('Service worker registered', registration);
+			},
+			onRegisterError(error) {
+				console.error('Service worker registration failed', error);
+			}
+		});
+	});
 
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
@@ -82,6 +101,12 @@
 		})();
 	});
 </script>
+
+<svelte:head>
+	{#if pwaInfo}
+		{@html pwaInfo.webManifest.linkTag}
+	{/if}
+</svelte:head>
 
 {#if $page.url.pathname === '/login'}
 	{@render children()}

@@ -3,7 +3,7 @@
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
-	import { marked } from 'marked';
+	import { marked, type Tokens } from 'marked';
 	import { tick } from 'svelte';
 	import DateInput from '$lib/components/ui/DateInput.svelte';
 	import { dragHandle } from 'svelte-dnd-action';
@@ -168,6 +168,15 @@
 		}
 	}
 
+	// Keyboard users have no equivalent of a double-tap gesture, so Enter/Space
+	// starts editing directly rather than requiring it twice within 300ms.
+	function handleTitleKeydown(e: KeyboardEvent) {
+		if (e.key === 'Enter' || e.key === ' ') {
+			e.preventDefault();
+			startEditing();
+		}
+	}
+
 	// Explicit link handler for the notes area: Android Chrome doesn't reliably
 	// follow target="_blank" links in dynamically injected HTML, but window.open
 	// called synchronously within a click handler (user gesture) always works.
@@ -191,22 +200,22 @@
 	// Configure marked to open links in new window and handle checkboxes
 	const renderer = new marked.Renderer();
 	const originalLinkRenderer = renderer.link.bind(renderer);
-	renderer.link = (href, title, text) => {
-		const html = originalLinkRenderer(href, title, text);
+	renderer.link = (token: Tokens.Link) => {
+		const html = originalLinkRenderer(token);
 		return html.replace('<a', '<a target="_blank" rel="noopener noreferrer"');
 	};
 
 	// Custom list item renderer
 	let checkboxIndex = 0;
 	const originalListItemRenderer = renderer.listitem.bind(renderer);
-	renderer.listitem = (text, taskItem, checked) => {
-		if (taskItem) {
+	renderer.listitem = (item: Tokens.ListItem) => {
+		if (item.task) {
 			const index = checkboxIndex++;
 			// Get the HTML from the original renderer
-			let html = originalListItemRenderer(text, taskItem, checked);
+			let html = originalListItemRenderer(item);
 
 			// Build our own checkbox without disabled attribute
-			const checkbox = `<input type="checkbox" ${checked ? 'checked' : ''} data-checkbox-index="${index}" class="task-checkbox" />`;
+			const checkbox = `<input type="checkbox" ${item.checked ? 'checked' : ''} data-checkbox-index="${index}" class="task-checkbox" />`;
 
 			// More aggressive replacement - find and replace any input checkbox
 			html = html.replace(/<input\s+([^>]*?)type=["']checkbox["']([^>]*?)>/gi, checkbox);
@@ -214,7 +223,7 @@
 
 			return html;
 		}
-		return originalListItemRenderer(text, taskItem, checked);
+		return originalListItemRenderer(item);
 	};
 
 	let renderedNotes = $derived.by(() => {
@@ -357,12 +366,13 @@
 						onkeydown={handleNotesKeyDown}
 						class="w-full text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-blue-300 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500 resize-y min-h-[60px]"
 						placeholder="Notes (Markdown supported)"
-					/>
+					></textarea>
 
 					<div class="grid grid-cols-2 gap-2">
 						<div class="flex flex-col gap-1">
-							<label class="text-xs text-gray-600 dark:text-gray-400 font-medium">Tags</label>
+							<label for="tags-{task.id}" class="text-xs text-gray-600 dark:text-gray-400 font-medium">Tags</label>
 							<input
+								id="tags-{task.id}"
 								bind:value={editedTags}
 								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 								type="text"
@@ -371,8 +381,9 @@
 						</div>
 
 						<div class="flex flex-col gap-1">
-							<label class="text-xs text-gray-600 dark:text-gray-400 font-medium">Due Date</label>
+							<label for="deadline-{task.id}" class="text-xs text-gray-600 dark:text-gray-400 font-medium">Due Date</label>
 							<DateInput
+								id="deadline-{task.id}"
 								bind:value={editedDeadline}
 								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 							/>
@@ -380,13 +391,18 @@
 					</div>
 
 					<div class="flex flex-col gap-1">
-						<label class="text-xs text-gray-600 dark:text-gray-400 font-medium">Reminder</label>
+						<!-- Labels two separate controls below via aria-labelledby,
+						     which a plain `for` can't express. -->
+						<!-- svelte-ignore a11y_label_has_associated_control -->
+						<label id="reminder-label-{task.id}" class="text-xs text-gray-600 dark:text-gray-400 font-medium">Reminder</label>
 						<div class="grid grid-cols-2 gap-2">
 							<DateInput
+								aria-labelledby="reminder-label-{task.id}"
 								bind:value={editedReminderDate}
 								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 							/>
 							<input
+								aria-labelledby="reminder-label-{task.id}"
 								bind:value={editedReminderTime}
 								class="text-xs text-gray-900 dark:text-gray-100 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded px-2 py-1 focus:outline-none focus:ring-1 focus:ring-blue-500"
 								type="time"
@@ -429,18 +445,26 @@
 					</button>
 				{/if}
 
-				<p
+				<span
 					onclick={handleTitleClick}
+					onkeydown={handleTitleKeydown}
+					role="button"
+					tabindex="0"
 					class="text-sm text-gray-900 dark:text-gray-100 flex-1 cursor-text touch-manipulation"
 					class:line-through={task.is_completed}
 					class:text-gray-500={task.is_completed}
 					class:dark:text-gray-400={task.is_completed}
 				>
 					{task.title}
-				</p>
+				</span>
 			</div>
 
 			{#if task.notes && notesExpanded}
+				<!-- No keyboard handler needed: this delegates clicks to the
+				     rendered <a> tags inside, which are already natively
+				     focusable/activatable. -->
+				<!-- svelte-ignore a11y_click_events_have_key_events -->
+				<!-- svelte-ignore a11y_no_static_element_interactions -->
 				<div
 					onclick={handleNotesClick}
 					class="text-xs text-gray-600 dark:text-gray-400 mt-2 ml-5 prose prose-sm max-w-none touch-manipulation"

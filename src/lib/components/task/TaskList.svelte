@@ -14,6 +14,13 @@
 	}
 
 	let { tasks, title, enableReorder = false, showContext = false }: Props = $props();
+	// items has to be $state (not $derived) because handleDndConsider/
+	// handleDndFinalize mutate it directly during drag-and-drop; the $effect
+	// below keeps it synced from the tasks prop the rest of the time. The
+	// initial snapshot here (rather than starting empty and letting the
+	// effect populate it) avoids a flash of "No tasks" before that effect's
+	// first run.
+	// svelte-ignore state_referenced_locally
 	let items = $state.raw<Task[]>([...tasks]);
 	let isDragging = $state(false);
 	// When a task is dropped on a sidebar zone, exclude it from the synced list
