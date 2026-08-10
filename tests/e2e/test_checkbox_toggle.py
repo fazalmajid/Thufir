@@ -27,7 +27,7 @@ def _create_task_with_checklist(page, db, test_user_id, title: str, notes: str):
 
     row.dblclick()
     page.get_by_placeholder("Notes (Markdown supported)").fill(notes)
-    page.get_by_role("button", name="Save").click()
+    page.get_by_role("button", name="Save", exact=True).click()
 
     poll_db_row(page, db, "SELECT notes FROM task WHERE user_id = %s::uuid AND title = %s", (test_user_id, title),
                 predicate=lambda row: row is not None and row[0] == notes)

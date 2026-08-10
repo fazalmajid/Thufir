@@ -5,7 +5,7 @@
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
 	import SidebarDropZone from './SidebarDropZone.svelte';
-	import type { Task } from '$lib/types/task';
+	import type { Task, TaskStatus } from '$lib/types/task';
 
 	interface Props {
 		isOpen?: boolean;
@@ -103,7 +103,7 @@
 		return Math.min(...targetTasks.map((t) => t.sort_order)) - 1;
 	}
 
-	function dropToStatus(task: Task, status: string, extra: Record<string, unknown> = {}) {
+	function dropToStatus(task: Task, status: TaskStatus, extra: Record<string, unknown> = {}) {
 		const target = taskStore.tasks.filter(
 			(t) => t.status === status && !t.is_completed && !t.deleted_at
 		);

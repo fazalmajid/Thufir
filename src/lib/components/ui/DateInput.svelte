@@ -3,9 +3,17 @@
 		value: string;
 		placeholder?: string;
 		class?: string;
+		id?: string;
+		'aria-labelledby'?: string;
 	}
 
-	let { value = $bindable(), placeholder = 'YYYY-MM-DD', class: cls = '' }: Props = $props();
+	let {
+		value = $bindable(),
+		placeholder = 'YYYY-MM-DD',
+		class: cls = '',
+		id,
+		'aria-labelledby': ariaLabelledby
+	}: Props = $props();
 
 	let picker: HTMLInputElement | undefined = $state();
 
@@ -19,6 +27,8 @@
 		type="text"
 		bind:value
 		{placeholder}
+		{id}
+		aria-labelledby={ariaLabelledby}
 		pattern="\d{4}-\d{2}-\d{2}"
 		class="w-full pr-7 {cls}"
 	/>
