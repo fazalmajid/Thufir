@@ -1,4 +1,4 @@
-import { createRxDatabase, addRxPlugin } from 'rxdb';
+import { createRxDatabase, removeRxDatabase, addRxPlugin } from 'rxdb';
 import { RxDBDevModePlugin } from 'rxdb/plugins/dev-mode';
 import { getRxStorageDexie } from 'rxdb/plugins/storage-dexie';
 import { taskSchema } from './schemas/task';
@@ -57,10 +57,8 @@ export type ThufirDatabase = RxDatabase<ThufirCollections>;
 
 let dbPromise: Promise<ThufirDatabase> | null = null;
 
-export async function getDB(): Promise<ThufirDatabase> {
-	if (dbPromise) return dbPromise;
-
-	dbPromise = createRxDatabase<ThufirCollections>({
+async function createAndInitDB(): Promise<ThufirDatabase> {
+	const db = await createRxDatabase<ThufirCollections>({
 		name: 'thufirdb',
 		storage: getRxStorageDexie(),
 		// ignoreDuplicate is dev-mode-only as of RxDB 16 and throws in
@@ -68,13 +66,35 @@ export async function getDB(): Promise<ThufirDatabase> {
 		// (e.g. left over from HMR re-running this module) instead of just
 		// suppressing the check, and works in both dev and prod.
 		closeDuplicates: true
-	}).then(async (db) => {
-		await db.addCollections({
-			tasks: { schema: taskSchema, conflictHandler: newerWinsConflictHandler<Task>() },
-			projects: { schema: projectSchema, conflictHandler: newerWinsConflictHandler<Project>() },
-			areas: { schema: areaSchema, conflictHandler: newerWinsConflictHandler<Area>() }
-		});
-		return db;
+	});
+	await db.addCollections({
+		tasks: { schema: taskSchema, conflictHandler: newerWinsConflictHandler<Task>() },
+		projects: { schema: projectSchema, conflictHandler: newerWinsConflictHandler<Project>() },
+		areas: { schema: areaSchema, conflictHandler: newerWinsConflictHandler<Area>() }
+	});
+	return db;
+}
+
+export async function getDB(): Promise<ThufirDatabase> {
+	if (dbPromise) return dbPromise;
+
+	dbPromise = createAndInitDB().catch(async (err) => {
+		// DM5: the local database was created by an older RxDB major version
+		// (e.g. a browser that last loaded the app before the 15->17
+		// migration) and RxDB refuses to open it without a storage
+		// migration. We're local-first-as-cache here, not
+		// local-first-as-source-of-truth — every document that's actually
+		// synced also lives in Postgres — so instead of RxDB's official
+		// migration path (installing an old RxDB version under a second
+		// package name just to read the old storage format), wipe the local
+		// copy and let replication do a full fresh pull. Any local write
+		// that hadn't been pushed yet is lost, but the alternative is the
+		// app being permanently broken on every browser that touched it
+		// before this migration.
+		if (err?.code !== 'DM5') throw err;
+		console.warn('Local RxDB storage is from an incompatible older version; resetting and re-syncing from the server.', err);
+		await removeRxDatabase('thufirdb', getRxStorageDexie());
+		return createAndInitDB();
 	});
 
 	return dbPromise;
