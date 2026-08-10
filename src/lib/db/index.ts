@@ -28,24 +28,22 @@ if (import.meta.env.DEV) {
 // timestamp race above (which clock skew between client and server could
 // otherwise resolve the wrong way).
 function newerWinsConflictHandler<T extends { updated_at: string }>(): RxConflictHandler<T> {
-	return async (i) => {
-		if (JSON.stringify(i.newDocumentState) === JSON.stringify(i.realMasterState)) {
-			return { isEqual: true };
-		}
+	return {
+		// Must be synchronous and fast — RxDB calls this on every potential
+		// conflict before ever calling resolve().
+		isEqual: (a, b) => JSON.stringify(a) === JSON.stringify(b),
+		resolve: async (i) => {
+			const { updated_at: _localTs, ...localRest } = i.newDocumentState;
+			const { updated_at: _masterTs, ...masterRest } = i.realMasterState;
+			if (JSON.stringify(localRest) === JSON.stringify(masterRest)) {
+				return i.realMasterState;
+			}
 
-		const { updated_at: _localTs, ...localRest } = i.newDocumentState;
-		const { updated_at: _masterTs, ...masterRest } = i.realMasterState;
-		if (JSON.stringify(localRest) === JSON.stringify(masterRest)) {
-			return { isEqual: false, documentData: i.realMasterState };
+			const localTime = Date.parse(i.newDocumentState.updated_at);
+			const masterTime = Date.parse(i.realMasterState.updated_at);
+			const localWins = !Number.isNaN(localTime) && !Number.isNaN(masterTime) && localTime > masterTime;
+			return localWins ? i.newDocumentState : i.realMasterState;
 		}
-
-		const localTime = Date.parse(i.newDocumentState.updated_at);
-		const masterTime = Date.parse(i.realMasterState.updated_at);
-		const localWins = !Number.isNaN(localTime) && !Number.isNaN(masterTime) && localTime > masterTime;
-		return {
-			isEqual: false,
-			documentData: localWins ? i.newDocumentState : i.realMasterState
-		};
 	};
 }
 
@@ -65,7 +63,11 @@ export async function getDB(): Promise<ThufirDatabase> {
 	dbPromise = createRxDatabase<ThufirCollections>({
 		name: 'thufirdb',
 		storage: getRxStorageDexie(),
-		ignoreDuplicate: true
+		// ignoreDuplicate is dev-mode-only as of RxDB 16 and throws in
+		// production. closeDuplicates actually closes the stale instance
+		// (e.g. left over from HMR re-running this module) instead of just
+		// suppressing the check, and works in both dev and prod.
+		closeDuplicates: true
 	}).then(async (db) => {
 		await db.addCollections({
 			tasks: { schema: taskSchema, conflictHandler: newerWinsConflictHandler<Task>() },
