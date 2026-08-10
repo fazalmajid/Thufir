@@ -94,9 +94,14 @@ def test_delete_and_restore_task(authed_page, db, test_user_id, marker):
         predicate=lambda row: row is not None and row[0] is True,
     )
 
-    page.goto(page.url.rsplit("/", 1)[0] + "/trash")
+    # Click the sidebar link rather than page.goto(): a hard navigation
+    # re-bootstraps RxDB from scratch, which against thufirdev's ~6k-task
+    # dataset can take well over the default actionability timeout to
+    # settle (see tests/e2e/README.md) — and isn't what a real user does
+    # when moving between views anyway. This is a normal in-SPA transition.
+    page.get_by_role("link", name="Trash").click()
     trashed_row = page.get_by_text(title, exact=True)
-    expect(trashed_row).to_be_visible()
+    expect(trashed_row).to_be_visible(timeout=10_000)
     # There's no sort guarantee on the trash view and thufirdev has plenty
     # of other deleted tasks, so `.first` would grab whichever trashed item
     # happens to render first — not necessarily this one.
