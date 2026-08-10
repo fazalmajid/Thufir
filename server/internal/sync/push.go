@@ -86,10 +86,24 @@ func HandlePush(collection string, pool *pgxpool.Pool) http.HandlerFunc {
 			}
 
 			// Apply write.
-			if err := upsertDocument(r.Context(), tx, collection, userID, row.NewDocumentState); err != nil { //nolint:contextcheck
+			written, err := upsertDocument(r.Context(), tx, collection, userID, row.NewDocumentState) //nolint:contextcheck
+			if err != nil {
 				writeErr(w, http.StatusInternalServerError, "upsert failed: "+err.Error())
 				return
 			}
+
+			// updated_at is always server-assigned (NOW()), so the row we
+			// just wrote is never byte-identical to what the client sent.
+			// RxDB's push protocol has no "accepted, here's the corrected
+			// state" response — the only channel back to the client is the
+			// conflicts array. Echo the written row through it; the
+			// client's conflictHandler (db/index.ts) recognizes an
+			// otherwise-identical document as a timestamp correction, not
+			// a real conflict, and applies it without data loss. Without
+			// this, the client's next push for the same document compares
+			// against its own stale guess and is rejected as a false
+			// conflict (see tests/e2e/README.md).
+			conflicts = append(conflicts, written)
 		}
 
 		if err := tx.Commit(r.Context()); err != nil {
@@ -104,8 +118,10 @@ func HandlePush(collection string, pool *pgxpool.Pool) http.HandlerFunc {
 	}
 }
 
-// upsertDocument routes to the collection-specific upsert function.
-func upsertDocument(ctx context.Context, tx pgx.Tx, collection, userID string, doc json.RawMessage) error {
+// upsertDocument routes to the collection-specific upsert function, which
+// returns the row as written (see push.go's HandlePush for why the caller
+// needs that).
+func upsertDocument(ctx context.Context, tx pgx.Tx, collection, userID string, doc json.RawMessage) (json.RawMessage, error) {
 	switch collection {
 	case "task":
 		return upsertTask(ctx, tx, userID, doc)
@@ -114,5 +130,5 @@ func upsertDocument(ctx context.Context, tx pgx.Tx, collection, userID string, d
 	case "area":
 		return upsertArea(ctx, tx, userID, doc)
 	}
-	return errors.New("unknown collection: " + collection)
+	return nil, errors.New("unknown collection: " + collection)
 }
