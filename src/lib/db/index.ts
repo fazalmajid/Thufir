@@ -18,11 +18,27 @@ if (import.meta.env.DEV) {
 // with a replication pull (poll or window-focus resync) can get silently
 // reverted. Resolve by updated_at instead: whichever side was written more
 // recently wins, only falling back to master when timestamps can't be compared.
+//
+// The server always overwrites updated_at with its own clock on write (see
+// upsert.go), and echoes the resulting row back through this same conflict
+// channel because RxDB's push protocol has no other way to report "accepted,
+// but here's the corrected timestamp" (see push.go). That echo is not a real
+// conflict — every other field is identical to what we just pushed — so it's
+// detected separately and always accepted, rather than going through the
+// timestamp race above (which clock skew between client and server could
+// otherwise resolve the wrong way).
 function newerWinsConflictHandler<T extends { updated_at: string }>(): RxConflictHandler<T> {
 	return async (i) => {
 		if (JSON.stringify(i.newDocumentState) === JSON.stringify(i.realMasterState)) {
 			return { isEqual: true };
 		}
+
+		const { updated_at: _localTs, ...localRest } = i.newDocumentState;
+		const { updated_at: _masterTs, ...masterRest } = i.realMasterState;
+		if (JSON.stringify(localRest) === JSON.stringify(masterRest)) {
+			return { isEqual: false, documentData: i.realMasterState };
+		}
+
 		const localTime = Date.parse(i.newDocumentState.updated_at);
 		const masterTime = Date.parse(i.realMasterState.updated_at);
 		const localWins = !Number.isNaN(localTime) && !Number.isNaN(masterTime) && localTime > masterTime;

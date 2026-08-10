@@ -29,15 +29,8 @@ def _create_task_with_checklist(page, db, test_user_id, title: str, notes: str):
     page.get_by_placeholder("Notes (Markdown supported)").fill(notes)
     page.get_by_role("button", name="Save").click()
 
-    # Same push-handler gap noted in test_task_crud.py: the create's push
-    # response never echoes the server-assigned updated_at, so editing again
-    # (adding notes) right after creating can be flagged as a false
-    # conflict. Wait for the edit to land, then force a resync so the
-    # checkbox click below starts from a known-fresh local state.
     poll_db_row(page, db, "SELECT notes FROM task WHERE user_id = %s::uuid AND title = %s", (test_user_id, title),
                 predicate=lambda row: row is not None and row[0] == notes)
-    page.evaluate("window.dispatchEvent(new Event('focus'))")
-    page.wait_for_timeout(500)
 
 
 def _assert_stays_checked(page, checkbox, settle_checks=15, interval_ms=200):

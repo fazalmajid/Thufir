@@ -83,17 +83,6 @@ def test_delete_and_restore_task(authed_page, db, test_user_id, marker):
     expect(row).to_be_visible()
     task_row = row.locator("xpath=ancestor::div[contains(@class,'group')][1]")
 
-    # Let a resync land before mutating again: the push handler's success
-    # response never echoes back the server-assigned `updated_at` (see
-    # server/internal/sync/push.go), so RxDB's local "assumedMasterState"
-    # for a just-created doc is still the client's own guess. Editing it
-    # again before a pull corrects that is flagged as a false conflict.
-    # Real known bug, out of scope here — worked around, not fixed.
-    poll_db_row(page, db, "SELECT updated_at FROM task WHERE user_id = %s::uuid AND title = %s", (test_user_id, title))
-    page.evaluate("window.dispatchEvent(new Event('focus'))")
-    page.wait_for_load_state("networkidle")
-    page.wait_for_timeout(500)
-
     page.once("dialog", lambda d: d.accept())
     task_row.get_by_role("button", name="Delete task").click()
     expect(page.get_by_text(title, exact=True)).not_to_be_visible()
@@ -104,10 +93,6 @@ def test_delete_and_restore_task(authed_page, db, test_user_id, marker):
         (test_user_id, title),
         predicate=lambda row: row is not None and row[0] is True,
     )
-    # Same push/pull gap as above, this time between delete and restore.
-    page.evaluate("window.dispatchEvent(new Event('focus'))")
-    page.wait_for_load_state("networkidle")
-    page.wait_for_timeout(500)
 
     page.goto(page.url.rsplit("/", 1)[0] + "/trash")
     trashed_row = page.get_by_text(title, exact=True)

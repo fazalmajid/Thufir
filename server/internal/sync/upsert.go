@@ -31,10 +31,15 @@ type taskDoc struct {
 	DeletedAt     *string  `json:"deleted_at"`
 }
 
-func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) error {
+// upsertTask writes the document and returns the row as it now stands in
+// Postgres (RETURNING, same statement/transaction — no extra round trip).
+// The caller needs this because updated_at is server-assigned (NOW()), so
+// the row that lands in the database is never byte-identical to what the
+// client pushed; see push.go for how that's communicated back.
+func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) (json.RawMessage, error) {
 	var d taskDoc
 	if err := json.Unmarshal(raw, &d); err != nil {
-		return err
+		return nil, err
 	}
 	if d.Tags == nil {
 		d.Tags = []string{}
@@ -42,7 +47,8 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 
 	// The updated_at is always set to NOW() — server clock is authoritative.
 	// deleted_at is client-controlled (soft delete / restore); pass it through as-is.
-	_, err := tx.Exec(ctx, `
+	var written string
+	err := tx.QueryRow(ctx, `
 		INSERT INTO task (
 			id, user_id, title, notes, project_id, area_id, parent_task_id,
 			status, is_completed, completed_at, start_date, deadline,
@@ -75,13 +81,17 @@ func upsertTask(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 			updated_at     = NOW(),
 			deleted_at     = EXCLUDED.deleted_at
 		WHERE task.user_id = $2::uuid
+		RETURNING (to_jsonb(task) - 'user_id' || jsonb_build_object('_deleted', task.deleted_at IS NOT NULL))::text
 	`,
 		d.ID, userID, d.Title, d.Notes, d.ProjectID, d.AreaID, d.ParentTaskID,
 		d.Status, d.IsCompleted, d.CompletedAt, d.StartDate, d.Deadline,
 		d.ScheduledDate, d.StartTime, d.ReminderTime, d.IsFlagged, d.Priority,
 		d.Tags, d.SortOrder, d.CreatedAt, d.DeletedAt,
-	)
-	return err
+	).Scan(&written)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(written), nil
 }
 
 // projectDoc mirrors the project JSON document shape.
@@ -99,10 +109,10 @@ type projectDoc struct {
 	DeletedAt   *string  `json:"deleted_at"`
 }
 
-func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) error {
+func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) (json.RawMessage, error) {
 	var d projectDoc
 	if err := json.Unmarshal(raw, &d); err != nil {
-		return err
+		return nil, err
 	}
 	if d.Tags == nil {
 		d.Tags = []string{}
@@ -111,7 +121,8 @@ func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMe
 		d.Status = "active"
 	}
 
-	_, err := tx.Exec(ctx, `
+	var written string
+	err := tx.QueryRow(ctx, `
 		INSERT INTO project (
 			id, user_id, name, notes, area_id, status, deadline,
 			tags, sort_order, created_at, updated_at, completed_at, deleted_at
@@ -131,11 +142,15 @@ func upsertProject(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMe
 			updated_at   = NOW(),
 			deleted_at   = EXCLUDED.deleted_at
 		WHERE project.user_id = $2::uuid
+		RETURNING (to_jsonb(project) - 'user_id' || jsonb_build_object('_deleted', project.deleted_at IS NOT NULL))::text
 	`,
 		d.ID, userID, d.Name, d.Notes, d.AreaID, d.Status, d.Deadline,
 		d.Tags, d.SortOrder, d.CreatedAt, d.CompletedAt, d.DeletedAt,
-	)
-	return err
+	).Scan(&written)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(written), nil
 }
 
 // areaDoc mirrors the area JSON document shape.
@@ -149,13 +164,14 @@ type areaDoc struct {
 	DeletedAt *string `json:"deleted_at"`
 }
 
-func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) error {
+func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessage) (json.RawMessage, error) {
 	var d areaDoc
 	if err := json.Unmarshal(raw, &d); err != nil {
-		return err
+		return nil, err
 	}
 
-	_, err := tx.Exec(ctx, `
+	var written string
+	err := tx.QueryRow(ctx, `
 		INSERT INTO area (
 			id, user_id, name, color, icon, sort_order, created_at, updated_at, deleted_at
 		) VALUES (
@@ -169,8 +185,12 @@ func upsertArea(ctx context.Context, tx pgx.Tx, userID string, raw json.RawMessa
 			updated_at = NOW(),
 			deleted_at = EXCLUDED.deleted_at
 		WHERE area.user_id = $2::uuid
+		RETURNING (to_jsonb(area) - 'user_id' || jsonb_build_object('_deleted', area.deleted_at IS NOT NULL))::text
 	`,
 		d.ID, userID, d.Name, d.Color, d.Icon, d.SortOrder, d.CreatedAt, d.DeletedAt,
-	)
-	return err
+	).Scan(&written)
+	if err != nil {
+		return nil, err
+	}
+	return json.RawMessage(written), nil
 }
