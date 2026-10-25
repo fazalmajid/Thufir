@@ -1,5 +1,5 @@
-import { getDB } from '$lib/db/index';
-import type { Area } from '$lib/types/area';
+import { getDB } from '#lib/db/index.js';
+import type { Area } from '#lib/types/area.js';
 
 class AreaStore {
 	areas = $state.raw<Area[]>([]);

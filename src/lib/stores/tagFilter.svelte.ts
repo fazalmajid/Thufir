@@ -1,4 +1,4 @@
-import type { Task } from '$lib/types/task';
+import type { Task } from '#lib/types/task.js';
 
 class TagFilterStore {
 	tag = $state<string | null>(null);

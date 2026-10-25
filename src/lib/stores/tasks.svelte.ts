@@ -1,5 +1,5 @@
-import { getDB } from '$lib/db/index';
-import type { Task, CreateTaskInput, UpdateTaskInput } from '$lib/types/task';
+import { getDB } from '#lib/db/index.js';
+import type { Task, CreateTaskInput, UpdateTaskInput } from '#lib/types/task.js';
 
 class TaskStore {
 	tasks = $state.raw<Task[]>([]);

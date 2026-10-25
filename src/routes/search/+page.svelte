@@ -1,13 +1,13 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import TaskList from '$lib/components/task/TaskList.svelte';
-	import TagFilter from '$lib/components/task/TagFilter.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
-	import type { Task } from '$lib/types/task';
+	import { page } from '$app/state';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import TaskList from '#lib/components/task/TaskList.svelte';
+	import TagFilter from '#lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
+	import type { Task } from '#lib/types/task.js';
 
 	// Get search query from URL
-	let searchQuery = $derived($page.url.searchParams.get('q') || '');
+	let searchQuery = $derived(page.url.searchParams.get('q') || '');
 
 	// Filter tasks based on search query
 	let searchResults = $derived.by(() => {
@@ -30,7 +30,7 @@
 			}
 
 			// Search in tags
-			if (task.tags && task.tags.some(tag => tag.toLowerCase().includes(query))) {
+			if (task.tags && task.tags.some((tag) => tag.toLowerCase().includes(query))) {
 				return true;
 			}
 
@@ -64,9 +64,21 @@
 				<TaskList tasks={tagFilterStore.apply(searchResults)} title="" enableReorder={false} showContext={true} />
 			</div>
 		{:else}
-			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">
-				<svg class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+			<div
+				class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center"
+			>
+				<svg
+					class="w-16 h-16 mx-auto text-gray-300 dark:text-gray-600 mb-4"
+					fill="none"
+					stroke="currentColor"
+					viewBox="0 0 24 24"
+				>
+					<path
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						stroke-width="2"
+						d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"
+					></path>
 				</svg>
 				<h3 class="text-lg font-medium text-gray-900 dark:text-gray-100 mb-1">No results found</h3>
 				<p class="text-sm text-gray-500 dark:text-gray-400">Try searching with different keywords</p>

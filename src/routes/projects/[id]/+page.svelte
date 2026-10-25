@@ -1,19 +1,15 @@
 <script lang="ts">
-	import { page } from '$app/stores';
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import { projectStore } from '$lib/stores/projects.svelte';
-	import TaskList from '$lib/components/task/TaskList.svelte';
-	import TagFilter from '$lib/components/task/TagFilter.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
-	import TaskQuickAdd from '$lib/components/task/TaskQuickAdd.svelte';
+	import { page } from '$app/state';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import { projectStore } from '#lib/stores/projects.svelte.js';
+	import TaskList from '#lib/components/task/TaskList.svelte';
+	import TagFilter from '#lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
+	import TaskQuickAdd from '#lib/components/task/TaskQuickAdd.svelte';
 
-	let projectId = $derived($page.params.id);
-	let project = $derived(projectStore.projects.find(p => p.id === projectId));
-	let projectTasks = $derived(
-		taskStore.tasks
-			.filter(t => t.project_id === projectId && !t.is_completed && !t.deleted_at)
-			.sort((a, b) => a.sort_order - b.sort_order)
-	);
+	let projectId = $derived(page.params.id);
+	let project = $derived(projectStore.projects.find((p) => p.id === projectId));
+	let projectTasks = $derived(taskStore.tasks.filter((t) => t.project_id === projectId && !t.is_completed && !t.deleted_at).sort((a, b) => a.sort_order - b.sort_order));
 </script>
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">

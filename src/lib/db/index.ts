@@ -5,9 +5,9 @@ import { taskSchema } from './schemas/task';
 import { projectSchema } from './schemas/project';
 import { areaSchema } from './schemas/area';
 import type { RxDatabase, RxCollection, RxConflictHandler } from 'rxdb';
-import type { Task } from '$lib/types/task';
-import type { Project } from '$lib/types/project';
-import type { Area } from '$lib/types/area';
+import type { Task } from '#lib/types/task.js';
+import type { Project } from '#lib/types/project.js';
+import type { Area } from '#lib/types/area.js';
 
 if (import.meta.env.DEV) {
 	addRxPlugin(RxDBDevModePlugin);

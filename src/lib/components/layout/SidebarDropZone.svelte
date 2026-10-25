@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Task } from '$lib/types/task';
-	import { dragStore } from '$lib/stores/drag.svelte';
+	import type { Task } from '#lib/types/task.js';
+	import { dragStore } from '#lib/stores/drag.svelte.js';
 	import type { Snippet } from 'svelte';
 
 	interface Props {

@@ -1,4 +1,4 @@
-import type { Task } from '$lib/types/task';
+import type { Task } from '#lib/types/task.js';
 
 type Zone = { el: HTMLElement; onDrop: (t: Task) => void | Promise<void> };
 

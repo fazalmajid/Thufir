@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { syncError, lastSync } from '$lib/stores/sync';
+	import { syncError, lastSync } from '#lib/stores/sync.js';
 
 	interface Props {
 		onMenuToggle: () => void;
