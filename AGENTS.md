@@ -195,10 +195,16 @@ make clean      # Remove build artefacts
 - `RP_ORIGIN` — WebAuthn origin URL
 - `GO_ENV=production` — enables secure cookies
 
+## Git Workflow
+
+- Never commit directly to `main`; create a feature branch first.
+- When asked to commit and push, always also open a pull request against `main` with `gh pr create` and report its URL. Changes land on `main` only by merging the PR.
+- Stage files explicitly; don't commit stray local files (`*.bak`, `.pi/`, `thufir.sql`).
+
 ## What Is Not Yet Implemented
 
 - Subtasks (schema has `parent_task_id`; no UI)
 - Recurring tasks
-- Tag browsing/faceting in UI (tags exist on tasks but no tag list route)
+- Tag list route (per-view tag filtering exists via `TagFilter` / `tagFilterStore`, but no route listing all tags)
 - Auto-purge of trash
 - Multi-user support

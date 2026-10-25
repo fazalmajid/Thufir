@@ -4,6 +4,7 @@
 	import { dragHandleZone, TRIGGERS } from 'svelte-dnd-action';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { dragStore } from '$lib/stores/drag.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 	import { flip } from 'svelte/animate';
 
 	interface Props {
@@ -14,6 +15,9 @@
 	}
 
 	let { tasks, title, enableReorder = false, showContext = false }: Props = $props();
+	// reorder() renumbers sort_order 0..n over only the tasks it is given, so
+	// reordering a tag-filtered subset would collide with the hidden tasks.
+	let reorderable = $derived(enableReorder && !tagFilterStore.tag);
 	// items has to be $state (not $derived) because handleDndConsider/
 	// handleDndFinalize mutate it directly during drag-and-drop; the $effect
 	// below keeps it synced from the tasks prop the rest of the time. The
@@ -59,7 +63,7 @@
 
 		items = finalItems;
 
-		if (enableReorder) {
+		if (reorderable) {
 			try {
 				await taskStore.reorder(items);
 			} catch (err) {
@@ -85,7 +89,7 @@
 			class="space-y-0.5"
 			use:dragHandleZone={{
 				items,
-				dragDisabled: !enableReorder,
+				dragDisabled: !reorderable,
 				dropTargetStyle: {},
 				type: 'tasks'
 			}}
@@ -94,7 +98,7 @@
 		>
 			{#each items as task (task.id)}
 				<div animate:flip={{ duration: 200 }}>
-					<TaskItem {task} draggable={enableReorder} {showContext} />
+					<TaskItem {task} draggable={reorderable} {showContext} />
 				</div>
 			{/each}
 		</div>

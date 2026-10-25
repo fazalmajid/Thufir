@@ -1,13 +1,18 @@
 <script lang="ts">
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import TaskList from '$lib/components/task/TaskList.svelte';
+	import TagFilter from '$lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 	import TaskQuickAdd from '$lib/components/task/TaskQuickAdd.svelte';
 </script>
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">
-	<div class="mb-4">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Inbox</h1>
-		<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Tasks waiting to be organized</p>
+	<div class="mb-4 flex items-start justify-between gap-3">
+		<div>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Inbox</h1>
+			<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Tasks waiting to be organized</p>
+		</div>
+		<TagFilter tasks={taskStore.inboxTasks} />
 	</div>
 
 	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
@@ -15,6 +20,6 @@
 	</div>
 
 	<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0">
-		<TaskList tasks={taskStore.inboxTasks} title="" enableReorder={true} />
+		<TaskList tasks={tagFilterStore.apply(taskStore.inboxTasks)} title="" enableReorder={true} />
 	</div>
 </div>

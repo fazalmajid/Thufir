@@ -1,12 +1,13 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { onMount } from 'svelte';
-	import { goto } from '$app/navigation';
+	import { goto, afterNavigate } from '$app/navigation';
 	import { page } from '$app/stores';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
 	import { dragStore } from '$lib/stores/drag.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 	import { startReplication } from '$lib/db/replication';
 	import { getDB } from '$lib/db/index';
 	import Sidebar from '$lib/components/layout/Sidebar.svelte';
@@ -36,6 +37,11 @@
 				console.error('Service worker registration failed', error);
 			}
 		});
+	});
+
+	// The tag filter is per-view; query-string changes (e.g. /search?q=) keep it.
+	afterNavigate(({ from, to }) => {
+		if (from?.url.pathname !== to?.url.pathname) tagFilterStore.clear();
 	});
 
 	function toggleMobileMenu() {
