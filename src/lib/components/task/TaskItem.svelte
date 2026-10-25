@@ -3,6 +3,7 @@
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 	import { marked, type Tokens } from 'marked';
 	import { tick } from 'svelte';
 	import DateInput from '$lib/components/ui/DateInput.svelte';
@@ -490,7 +491,14 @@
 			{#if task.tags && task.tags.length > 0}
 				<div class="flex flex-wrap gap-1.5 mt-1 ml-5">
 					{#each task.tags as tag}
-						<span class="text-xs px-1.5 py-0.5 bg-blue-100 text-blue-700 rounded">{tag}</span>
+						<button
+							onclick={(e) => { e.stopPropagation(); tagFilterStore.toggle(tag); }}
+							class="text-xs px-1.5 py-0.5 rounded touch-manipulation {tag === tagFilterStore.tag
+								? 'bg-blue-600 text-white hover:bg-blue-700'
+								: 'bg-blue-100 text-blue-700 hover:bg-blue-200'}"
+							aria-pressed={tag === tagFilterStore.tag}
+							title={tag === tagFilterStore.tag ? 'Clear tag filter' : `Show only tasks tagged “${tag}”`}
+						>{tag}</button>
 					{/each}
 				</div>
 			{/if}

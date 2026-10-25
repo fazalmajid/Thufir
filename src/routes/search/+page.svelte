@@ -2,6 +2,8 @@
 	import { page } from '$app/stores';
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import TaskList from '$lib/components/task/TaskList.svelte';
+	import TagFilter from '$lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 	import type { Task } from '$lib/types/task';
 
 	// Get search query from URL
@@ -42,21 +44,24 @@
 </script>
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">
-	<div class="mb-4">
-		<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Search Results</h1>
-		{#if searchQuery}
-			<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
-				Found {resultCount} {resultCount === 1 ? 'task' : 'tasks'} matching "{searchQuery}"
-			</p>
-		{:else}
-			<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Enter a search query to find tasks</p>
-		{/if}
+	<div class="mb-4 flex items-start justify-between gap-3">
+		<div>
+			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Search Results</h1>
+			{#if searchQuery}
+				<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">
+					Found {resultCount} {resultCount === 1 ? 'task' : 'tasks'} matching "{searchQuery}"
+				</p>
+			{:else}
+				<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Enter a search query to find tasks</p>
+			{/if}
+		</div>
+		<TagFilter tasks={searchResults} />
 	</div>
 
 	{#if searchQuery}
 		{#if resultCount > 0}
 			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0">
-				<TaskList tasks={searchResults} title="" enableReorder={false} showContext={true} />
+				<TaskList tasks={tagFilterStore.apply(searchResults)} title="" enableReorder={false} showContext={true} />
 			</div>
 		{:else}
 			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-8 text-center">

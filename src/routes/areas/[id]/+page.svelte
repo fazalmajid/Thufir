@@ -4,6 +4,8 @@
 	import { projectStore } from '$lib/stores/projects.svelte';
 	import { areaStore } from '$lib/stores/areas.svelte';
 	import TaskList from '$lib/components/task/TaskList.svelte';
+	import TagFilter from '$lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 	import TaskQuickAdd from '$lib/components/task/TaskQuickAdd.svelte';
 
 	let areaId = $derived($page.params.id);
@@ -20,8 +22,9 @@
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">
 	{#if area}
-		<div class="mb-4">
+		<div class="mb-4 flex items-start justify-between gap-3">
 			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">{area.name}</h1>
+			<TagFilter tasks={areaTasks} />
 		</div>
 
 		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-3 mb-3">
@@ -30,7 +33,7 @@
 
 		{#if areaTasks.length > 0}
 			<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm p-0 mb-4">
-				<TaskList tasks={areaTasks} title="" enableReorder={true} />
+				<TaskList tasks={tagFilterStore.apply(areaTasks)} title="" enableReorder={true} />
 			</div>
 		{/if}
 

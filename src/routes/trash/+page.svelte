@@ -1,6 +1,8 @@
 <script lang="ts">
 	import { taskStore } from '$lib/stores/tasks.svelte';
 	import type { Task } from '$lib/types/task';
+	import TagFilter from '$lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
 
 	async function handleRestore(task: Task) {
 		try {
@@ -44,14 +46,17 @@
 			<h1 class="text-2xl font-bold text-gray-900 dark:text-gray-100">Trash</h1>
 			<p class="text-sm text-gray-600 dark:text-gray-400 mt-0.5">Deleted tasks</p>
 		</div>
-		{#if taskStore.trashedTasks.length > 0}
-			<button
-				onclick={handleEmptyTrash}
-				class="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
-			>
-				Empty Trash
-			</button>
-		{/if}
+		<div class="flex items-center gap-2">
+			<TagFilter tasks={taskStore.trashedTasks} />
+			{#if taskStore.trashedTasks.length > 0}
+				<button
+					onclick={handleEmptyTrash}
+					class="px-3 py-1.5 text-xs text-red-600 hover:text-red-700 border border-red-300 rounded-lg hover:bg-red-50 transition-colors"
+				>
+					Empty Trash
+				</button>
+			{/if}
+		</div>
 	</div>
 
 	{#if taskStore.trashedTasks.length === 0}
@@ -64,7 +69,7 @@
 		</div>
 	{:else}
 		<div class="bg-white dark:bg-gray-800 rounded-lg shadow-sm">
-			{#each taskStore.trashedTasks as task (task.id)}
+			{#each tagFilterStore.apply(taskStore.trashedTasks) as task (task.id)}
 				<div class="flex items-center gap-3 py-2 px-1 hover:bg-gray-50 dark:hover:bg-gray-700 border-b border-gray-100 dark:border-gray-700 last:border-0">
 					<div class="flex-1 min-w-0">
 						<p class="text-sm text-gray-500 dark:text-gray-400 line-through">
@@ -72,6 +77,19 @@
 						</p>
 						{#if task.notes}
 							<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5 line-through">{task.notes}</p>
+						{/if}
+						{#if task.tags && task.tags.length > 0}
+							<div class="flex flex-wrap gap-1.5 mt-1">
+								{#each task.tags as tag}
+									<button
+										onclick={() => tagFilterStore.toggle(tag)}
+										class="text-xs px-1.5 py-0.5 rounded {tag === tagFilterStore.tag
+											? 'bg-blue-600 text-white hover:bg-blue-700'
+											: 'bg-blue-100 text-blue-700 hover:bg-blue-200'}"
+										aria-pressed={tag === tagFilterStore.tag}
+									>{tag}</button>
+								{/each}
+							</div>
 						{/if}
 						{#if task.deleted_at}
 							<p class="text-xs text-gray-400 dark:text-gray-500 mt-0.5">
