@@ -1,10 +1,10 @@
 <script lang="ts">
-	import type { Task } from '$lib/types/task';
+	import type { Task } from '#lib/types/task.js';
 	import TaskItem from './TaskItem.svelte';
 	import { dragHandleZone, TRIGGERS } from 'svelte-dnd-action';
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import { dragStore } from '$lib/stores/drag.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import { dragStore } from '#lib/stores/drag.svelte.js';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
 	import { flip } from 'svelte/animate';
 
 	interface Props {

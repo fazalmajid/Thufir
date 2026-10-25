@@ -1,5 +1,5 @@
-import { getDB } from '$lib/db/index';
-import type { Project } from '$lib/types/project';
+import { getDB } from '#lib/db/index.js';
+import type { Project } from '#lib/types/project.js';
 
 class ProjectStore {
 	projects = $state.raw<Project[]>([]);

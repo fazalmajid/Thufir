@@ -6,9 +6,10 @@ Thufir is a local-first, self-hosted PWA task manager modelled after Cultured Co
 
 | Layer | Technology |
 |-------|------------|
-| Frontend | Svelte 5 (runes), SvelteKit 2 (static adapter, SSR disabled) |
+| Frontend | Svelte 5 (runes), SvelteKit 3 (static adapter, SSR disabled; config lives in `vite.config.ts`) |
+| Offline / PWA | Hand-written SvelteKit service worker (`src/service-worker/`) + `static/manifest.webmanifest` |
 | Styling | TailwindCSS 3 + typography plugin |
-| Client DB | RxDB 15 with Dexie/IndexedDB storage |
+| Client DB | RxDB 17 with Dexie/IndexedDB storage |
 | Markdown | marked.js |
 | DnD | svelte-dnd-action |
 | Auth (client) | @simplewebauthn/browser |
@@ -21,7 +22,8 @@ Thufir is a local-first, self-hosted PWA task manager modelled after Cultured Co
 ```
 src/
   routes/           SvelteKit pages (no SSR — all client-rendered)
-  lib/
+  service-worker/   Precaches the build + app shell; own tsconfig (WebWorker lib)
+  lib/              Imported as `#lib/...` with file extensions (package.json "imports")
     types/          TypeScript interfaces for the three core entities
     db/             RxDB init, schemas, and replication logic
     stores/         Svelte 5 rune-based state ($state, $derived)
@@ -157,7 +159,9 @@ The root `+layout.svelte` checks auth (`GET /api/auth/me`), redirects to `/login
 - Checkpoint-based pull/push over REST
 - Pull: `GET /api/rxdb/{collection}/pull?checkpoint=...&limit=...`
 - Push: `POST /api/rxdb/{collection}/push` (array of changed docs)
-- Live mode enabled; polls every 10 s; re-syncs on `window focus`
+- Live mode enabled; polls every 10 s; re-syncs on `window focus` and on `visibilitychange` to visible (iOS home-screen apps)
+
+**Service worker** (`src/service-worker/index.ts`): cache-first for the hashed `_app/` build, static assets, and the app shell (cached under `/`, since the Go server returns other SPA routes with a 404 status). `/api/*` is never intercepted. Each build gets a new cache; `+layout.svelte` reloads the page when a new worker takes control.
 
 **Server handlers** (`server/internal/sync/`):
 - Pull uses `(updated_at, id)` cursor ordering
@@ -170,7 +174,7 @@ Single-user WebAuthn (passkeys). Session cookie (90 days, SameSite=Lax dev / Non
 
 ## Key Patterns & Conventions
 
-- **Svelte 5 runes only** — no Svelte 4 stores. Use `$state`, `$derived`, `$props`, `$effect`.
+- **Svelte 5 runes only** — no Svelte 4 stores. Use `$state`, `$derived`, `$props`, `$effect`. Read the current URL via `page` from `$app/state` (`$app/stores` no longer exists in SvelteKit 3).
 - **Soft deletes everywhere** — set `deleted_at` to delete; never hard-delete client-side.
 - **UUIDs client-side** — `crypto.randomUUID()` at creation; server accepts them as-is.
 - **Timestamps as ISO 8601 strings** — `created_at`, `updated_at`, dates, reminder_time.

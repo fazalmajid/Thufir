@@ -1,9 +1,9 @@
 <script lang="ts">
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import TaskList from '$lib/components/task/TaskList.svelte';
-	import TagFilter from '$lib/components/task/TagFilter.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
-	import TaskQuickAdd from '$lib/components/task/TaskQuickAdd.svelte';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import TaskList from '#lib/components/task/TaskList.svelte';
+	import TagFilter from '#lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
+	import TaskQuickAdd from '#lib/components/task/TaskQuickAdd.svelte';
 </script>
 
 <div class="container mx-auto px-4 py-4 max-w-4xl">

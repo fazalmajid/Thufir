@@ -1,5 +1,5 @@
 import type { RxJsonSchema } from 'rxdb';
-import type { Project } from '$lib/types/project';
+import type { Project } from '#lib/types/project.js';
 
 export const projectSchema: RxJsonSchema<Project> = {
 	version: 0,

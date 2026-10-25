@@ -1,5 +1,5 @@
 import type { RxJsonSchema } from 'rxdb';
-import type { Task } from '$lib/types/task';
+import type { Task } from '#lib/types/task.js';
 
 export const taskSchema: RxJsonSchema<Task> = {
 	version: 0,

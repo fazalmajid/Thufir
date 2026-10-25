@@ -1,5 +1,5 @@
 import type { RxJsonSchema } from 'rxdb';
-import type { Area } from '$lib/types/area';
+import type { Area } from '#lib/types/area.js';
 
 export const areaSchema: RxJsonSchema<Area> = {
 	version: 0,

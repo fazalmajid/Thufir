@@ -1,12 +1,12 @@
 <script lang="ts">
-	import type { Task } from '$lib/types/task';
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import { projectStore } from '$lib/stores/projects.svelte';
-	import { areaStore } from '$lib/stores/areas.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
+	import type { Task } from '#lib/types/task.js';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import { projectStore } from '#lib/stores/projects.svelte.js';
+	import { areaStore } from '#lib/stores/areas.svelte.js';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
 	import { marked, type Tokens } from 'marked';
 	import { tick } from 'svelte';
-	import DateInput from '$lib/components/ui/DateInput.svelte';
+	import DateInput from '#lib/components/ui/DateInput.svelte';
 	import { dragHandle } from 'svelte-dnd-action';
 
 	interface Props {

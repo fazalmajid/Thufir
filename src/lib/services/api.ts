@@ -1,6 +1,6 @@
-import type { Task, CreateTaskInput, UpdateTaskInput } from '$lib/types/task';
-import type { Project } from '$lib/types/project';
-import type { Area } from '$lib/types/area';
+import type { Task, CreateTaskInput, UpdateTaskInput } from '#lib/types/task.js';
+import type { Project } from '#lib/types/project.js';
+import type { Area } from '#lib/types/area.js';
 
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3001';
 

@@ -1,8 +1,8 @@
 <script lang="ts">
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import type { Task } from '$lib/types/task';
-	import TagFilter from '$lib/components/task/TagFilter.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import type { Task } from '#lib/types/task.js';
+	import TagFilter from '#lib/components/task/TagFilter.svelte';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
 
 	async function handleRestore(task: Task) {
 		try {

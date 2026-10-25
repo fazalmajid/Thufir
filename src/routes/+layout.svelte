@@ -1,16 +1,16 @@
 <script lang="ts">
 	import type { Snippet } from 'svelte';
 	import { goto, afterNavigate } from '$app/navigation';
-	import { page } from '$app/stores';
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import { projectStore } from '$lib/stores/projects.svelte';
-	import { areaStore } from '$lib/stores/areas.svelte';
-	import { dragStore } from '$lib/stores/drag.svelte';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
-	import { startReplication } from '$lib/db/replication';
-	import { getDB } from '$lib/db/index';
-	import Sidebar from '$lib/components/layout/Sidebar.svelte';
-	import Header from '$lib/components/layout/Header.svelte';
+	import { page } from '$app/state';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import { projectStore } from '#lib/stores/projects.svelte.js';
+	import { areaStore } from '#lib/stores/areas.svelte.js';
+	import { dragStore } from '#lib/stores/drag.svelte.js';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
+	import { startReplication } from '#lib/db/replication.js';
+	import { getDB } from '#lib/db/index.js';
+	import Sidebar from '#lib/components/layout/Sidebar.svelte';
+	import Header from '#lib/components/layout/Header.svelte';
 	import '../app.css';
 
 	let { children }: { children: Snippet } = $props();
@@ -21,9 +21,17 @@
 	let dbInitialized = $state(false);
 
 	// The tag filter is per-view; query-string changes (e.g. /search?q=) keep it.
-	afterNavigate(({ from, to }) => {
+	afterNavigate(({ from, to, shallow, type }) => {
+		if (shallow && type === 'goto') return;
 		if (from?.url.pathname !== to?.url.pathname) tagFilterStore.clear();
 	});
+
+	// SvelteKit registers src/service-worker. A new deploy's worker deletes the
+	// previous version's cached chunks on activation, so reload onto the new
+	// build when it takes over. Skipped on first install (no prior controller).
+	if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+		navigator.serviceWorker.addEventListener('controllerchange', () => location.reload(), { once: true });
+	}
 
 	function toggleMobileMenu() {
 		isMobileMenuOpen = !isMobileMenuOpen;
@@ -53,7 +61,7 @@
 	});
 
 	$effect(() => {
-		if ($page.url.pathname === '/login') {
+		if (page.url.pathname === '/login') {
 			authReady = true;
 			return;
 		}
@@ -89,7 +97,7 @@
 	});
 </script>
 
-{#if $page.url.pathname === '/login'}
+{#if page.url.pathname === '/login'}
 	{@render children()}
 {:else if authReady && isAuthenticated}
 	<div class="flex h-screen overflow-hidden">

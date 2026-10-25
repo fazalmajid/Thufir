@@ -1,13 +1,13 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { goto } from '$app/navigation';
-	import { page } from '$app/stores';
+	import { page } from '$app/state';
 
 	let error = $state('');
 
 	onMount(async () => {
-		const title = $page.url.searchParams.get('title') ?? '';
-		const url = $page.url.searchParams.get('url') ?? '';
+		const title = page.url.searchParams.get('title') ?? '';
+		const url = page.url.searchParams.get('url') ?? '';
 
 		try {
 			const res = await fetch('/api/tasks/quick-add', {

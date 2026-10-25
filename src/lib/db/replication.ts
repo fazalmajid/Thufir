@@ -1,7 +1,7 @@
 import { replicateRxCollection } from 'rxdb/plugins/replication';
 import { interval } from 'rxjs';
 import type { ThufirDatabase } from './index';
-import { syncError, lastSync } from '$lib/stores/sync';
+import { syncError, lastSync } from '#lib/stores/sync.js';
 
 const API_BASE = '';
 const POLL_INTERVAL_MS = 10_000;

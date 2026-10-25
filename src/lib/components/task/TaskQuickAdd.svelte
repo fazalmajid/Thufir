@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { taskStore } from '$lib/stores/tasks.svelte';
-	import type { TaskStatus } from '$lib/types/task';
+	import { taskStore } from '#lib/stores/tasks.svelte.js';
+	import type { TaskStatus } from '#lib/types/task.js';
 
 	interface Props {
 		status?: TaskStatus;

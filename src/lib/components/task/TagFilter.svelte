@@ -1,6 +1,6 @@
 <script lang="ts">
-	import type { Task } from '$lib/types/task';
-	import { tagFilterStore } from '$lib/stores/tagFilter.svelte';
+	import type { Task } from '#lib/types/task.js';
+	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
 
 	interface Props {
 		// Unfiltered tasks of the current view; the picker offers their tags.
