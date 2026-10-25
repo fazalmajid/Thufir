@@ -73,8 +73,12 @@ export async function startReplication(db: ThufirDatabase) {
 	// even when this client has no local writes to push.
 	interval(POLL_INTERVAL_MS).subscribe(triggerSync);
 
-	// Also sync immediately when the tab/window regains focus.
+	// Also sync immediately when the tab/window regains focus. iOS home-screen
+	// apps don't reliably fire `focus` on resume, but do fire visibilitychange.
 	if (typeof window !== 'undefined') {
 		window.addEventListener('focus', triggerSync);
+		document.addEventListener('visibilitychange', () => {
+			if (document.visibilityState === 'visible') triggerSync();
+		});
 	}
 }
