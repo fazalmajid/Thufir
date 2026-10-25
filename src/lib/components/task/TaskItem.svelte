@@ -494,8 +494,8 @@
 						<button
 							onclick={(e) => { e.stopPropagation(); tagFilterStore.toggle(tag); }}
 							class="text-xs px-1.5 py-0.5 rounded touch-manipulation {tag === tagFilterStore.tag
-								? 'bg-blue-600 text-white hover:bg-blue-700'
-								: 'bg-blue-100 text-blue-700 hover:bg-blue-200'}"
+								? 'bg-orange-600 text-white hover:bg-orange-700 ring-2 ring-orange-300 dark:bg-yellow-300 dark:text-gray-900 dark:hover:bg-yellow-200 dark:ring-yellow-100'
+								: 'bg-orange-200 text-orange-900 hover:bg-orange-300 dark:bg-yellow-500 dark:text-gray-900 dark:hover:bg-yellow-400'}"
 							aria-pressed={tag === tagFilterStore.tag}
 							title={tag === tagFilterStore.tag ? 'Clear tag filter' : `Show only tasks tagged “${tag}”`}
 						>{tag}</button>

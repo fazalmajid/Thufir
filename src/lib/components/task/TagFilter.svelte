@@ -39,7 +39,7 @@
 	<div bind:this={container} class="relative inline-flex items-center">
 		<div
 			class="inline-flex items-center rounded-full border text-xs {tagFilterStore.tag
-				? 'border-blue-300 bg-blue-100 text-blue-700 dark:border-blue-700 dark:bg-blue-900 dark:text-blue-200'
+				? 'border-orange-300 bg-orange-200 text-orange-900 dark:border-yellow-400 dark:bg-yellow-500 dark:text-gray-900'
 				: 'border-gray-300 dark:border-gray-600 text-gray-600 dark:text-gray-300'}"
 		>
 			<button
@@ -60,7 +60,7 @@
 			{#if tagFilterStore.tag}
 				<button
 					onclick={() => tagFilterStore.clear()}
-					class="p-1 mr-0.5 rounded-full hover:bg-blue-200 dark:hover:bg-blue-800 touch-manipulation"
+					class="p-1 mr-0.5 rounded-full hover:bg-orange-300 dark:hover:bg-yellow-400 touch-manipulation"
 					aria-label="Clear tag filter"
 				>
 					<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
