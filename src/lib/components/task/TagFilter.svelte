@@ -1,6 +1,6 @@
 <script lang="ts">
 	import type { Task } from '#lib/types/task.js';
-	import { tagFilterStore } from '#lib/stores/tagFilter.svelte.js';
+	import { tagFilterStore, UNTAGGED } from '#lib/stores/tagFilter.svelte.js';
 
 	interface Props {
 		// Unfiltered tasks of the current view; the picker offers their tags.
@@ -18,8 +18,9 @@
 		}
 		return [...counts].sort((a, b) => a[0].localeCompare(b[0]));
 	});
+	let untaggedCount = $derived(tasks.filter((t) => !t.tags?.length).length);
 
-	function select(tag: string) {
+	function select(tag: string | typeof UNTAGGED) {
 		tagFilterStore.tag = tag;
 		open = false;
 	}
@@ -52,7 +53,9 @@
 				<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
 				</svg>
-				<span>{tagFilterStore.tag ?? 'Tags'}</span>
+				<span class:italic={tagFilterStore.tag === UNTAGGED}>
+					{tagFilterStore.tag === UNTAGGED ? 'Untagged' : (tagFilterStore.tag ?? 'Tags')}
+				</span>
 				<svg class="w-3.5 h-3.5 transition-transform" class:rotate-180={open} fill="none" stroke="currentColor" viewBox="0 0 24 24">
 					<path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
 				</svg>
@@ -76,6 +79,20 @@
 				aria-label="Tags"
 				class="absolute right-0 top-full mt-1 z-20 min-w-[10rem] max-h-64 overflow-y-auto py-1 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-lg"
 			>
+				<li
+					role="option"
+					aria-selected={tagFilterStore.tag === UNTAGGED}
+					class="border-b border-gray-100 dark:border-gray-700 mb-1 pb-1"
+				>
+					<button
+						onclick={() => select(UNTAGGED)}
+						class="w-full flex items-center gap-3 px-3 py-1.5 text-left text-sm italic text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700"
+						class:font-semibold={tagFilterStore.tag === UNTAGGED}
+					>
+						<span class="flex-1 truncate">Untagged</span>
+						<span class="text-xs not-italic text-gray-400 dark:text-gray-500">{untaggedCount}</span>
+					</button>
+				</li>
 				{#each tagCounts as [tag, count] (tag)}
 					<li role="option" aria-selected={tag === tagFilterStore.tag}>
 						<button
